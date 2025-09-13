@@ -102,40 +102,41 @@ function App() {
   const renderTela = () => {
     switch (telaAtiva) {
       case 'dashboard':
-        return <Dashboard caminhoes={caminhoes} rotas={rotas} pontoPartida={pontoAtual} />;
+        return <Dashboard caminhoes={caminhoes} rotas={rotas} configuracoes={pontosPartida} />;
       case 'nova-entrega':
         return (
           <NovaEntrega 
             pedidos={pedidos} 
-            onAdicionarPedido={adicionarPedido}
-            onIrParaOtimizacao={() => setTelaAtiva('otimizacao')}
-            pontosPartida={pontosPartida}
-            pontoSelecionado={pontoPartidaSelecionado}
-            onSelecionarPonto={setPontoPartidaSelecionado}
-            onIrParaConfiguracoes={() => setTelaAtiva('configuracoes')}
+            setPedidos={setPedidos}
+            configuracoes={pontosPartida}
+            pontoPartidaSelecionado={pontoPartidaSelecionado}
+            setPontoPartidaSelecionado={setPontoPartidaSelecionado}
+            setTelaAtiva={setTelaAtiva}
           />
         );
       case 'otimizacao':
         return (
           <OtimizacaoRotas 
             pedidos={pedidos}
+            setPedidos={setPedidos}
             caminhoes={caminhoes}
-            onConfirmarRota={confirmarRota}
-            onVoltar={() => setTelaAtiva('nova-entrega')}
-            pontoPartida={pontoAtual}
+            setCaminhoes={setCaminhoes}
+            rotas={rotas}
+            setRotas={setRotas}
+            configuracoes={pontosPartida}
+            pontoPartidaSelecionado={pontoPartidaSelecionado}
+            setTelaAtiva={setTelaAtiva}
           />
         );
       case 'relatorios':
         return <Relatorios caminhoes={caminhoes} rotas={rotas} />;
       case 'caminhoes':
-        return <CadastroCaminhoes caminhoes={caminhoes} onAdicionarCaminhao={adicionarCaminhao} />;
+        return <CadastroCaminhoes caminhoes={caminhoes} setCaminhoes={setCaminhoes} />;
       case 'configuracoes':
         return (
           <ConfiguracaoRotas
-            pontosPartida={pontosPartida}
-            onAdicionarPonto={adicionarPontoPartida}
-            onDefinirPadrao={definirPontoPadrao}
-            onRemoverPonto={removerPontoPartida}
+            configuracoes={pontosPartida}
+            setConfiguracoes={setPontosPartida}
           />
         );
       default:

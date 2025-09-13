@@ -23,7 +23,6 @@ export default function MapaReal({ pedidos, pontoPartida, rotaOtimizada = false,
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const centroDistribuicao = pontoPartida || CENTRO_DISTRIBUICAO_PADRAO;
-  const centroDistribuicao = pontoPartida || CENTRO_DISTRIBUICAO_PADRAO;
 
   useEffect(() => {
     if (!apiKey || apiKey === 'your_google_maps_api_key_here') {

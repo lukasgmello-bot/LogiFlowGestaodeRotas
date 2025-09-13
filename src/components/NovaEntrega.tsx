@@ -7,7 +7,8 @@ interface NovaEntregaProps {
   pedidos: Pedido[];
   setPedidos: (pedidos: Pedido[]) => void;
   configuracoes: ConfiguracaoRota[];
-  configuracoes: ConfiguracaoRota[];
+  pontoPartidaSelecionado?: string;
+  setPontoPartidaSelecionado: (id: string) => void;
   setTelaAtiva: (tela: TelaAtiva) => void;
 }
 

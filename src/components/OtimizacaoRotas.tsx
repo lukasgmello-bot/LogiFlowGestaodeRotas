@@ -13,8 +13,6 @@ interface OtimizacaoRotasProps {
   setRotas: (rotas: Rota[]) => void;
   configuracoes: ConfiguracaoRota[];
   pontoPartidaSelecionado?: string;
-  configuracoes: ConfiguracaoRota[];
-  pontoPartidaSelecionado?: string;
   setTelaAtiva: (tela: TelaAtiva) => void;
 }
 
@@ -25,8 +23,6 @@ export default function OtimizacaoRotas({
   setCaminhoes, 
   rotas, 
   setRotas, 
-  configuracoes,
-  pontoPartidaSelecionado,
   configuracoes,
   pontoPartidaSelecionado,
   setTelaAtiva 

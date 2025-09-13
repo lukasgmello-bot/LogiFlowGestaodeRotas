@@ -7,7 +7,6 @@ interface DashboardProps {
   caminhoes: Caminhao[];
   rotas: Rota[];
   configuracoes: ConfiguracaoRota[];
-  configuracoes: ConfiguracaoRota[];
 }
 
 export default function Dashboard({ caminhoes, rotas, configuracoes }: DashboardProps) {
