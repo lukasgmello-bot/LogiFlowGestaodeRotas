@@ -15,7 +15,6 @@ export default function NovaEntrega({ pedidos, setPedidos, configuracoes, setTel
   const [endereco, setEndereco] = useState('');
   const [volume, setVolume] = useState('');
   const [pontoPartidaSelecionado, setPontoPartidaSelecionado] = useState('');
-  const [pontoPartidaSelecionado, setPontoPartidaSelecionado] = useState('');
 
   const adicionarPedido = () => {
     if (!endereco || !volume) return;
@@ -37,10 +36,6 @@ export default function NovaEntrega({ pedidos, setPedidos, configuracoes, setTel
   };
 
   const volumeTotal = pedidos.reduce((acc, p) => acc + p.volume, 0);
-  const configuracaoPadrao = configuracoes.find(c => c.padrao);
-  const pontoPartidaAtual = pontoPartidaSelecionado 
-    ? configuracoes.find(c => c.id === pontoPartidaSelecionado)?.endereco
-    : configuracaoPadrao?.endereco;
   const configuracaoPadrao = configuracoes.find(c => c.padrao);
   const pontoPartidaAtual = pontoPartidaSelecionado 
     ? configuracoes.find(c => c.id === pontoPartidaSelecionado)?.endereco

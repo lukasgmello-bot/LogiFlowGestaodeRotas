@@ -23,9 +23,6 @@ export default function Dashboard({ caminhoes, rotas, configuracoes }: Dashboard
   const configuracaoPadrao = configuracoes.find(c => c.padrao);
   const rotaAtiva = rotas.find(r => r.status === 'Em Andamento');
 
-  const configuracaoPadrao = configuracoes.find(c => c.padrao);
-  const rotaAtiva = rotas.find(r => r.status === 'Em Andamento');
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

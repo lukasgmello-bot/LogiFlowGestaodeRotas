@@ -38,10 +38,6 @@ export default function OtimizacaoRotas({
   const pontoPartidaAtual = pontoPartidaSelecionado 
     ? configuracoes.find(c => c.id === pontoPartidaSelecionado)?.endereco
     : configuracaoPadrao?.endereco;
-  const configuracaoPadrao = configuracoes.find(c => c.padrao);
-  const pontoPartidaAtual = pontoPartidaSelecionado 
-    ? configuracoes.find(c => c.id === pontoPartidaSelecionado)?.endereco
-    : configuracaoPadrao?.endereco;
   
   // Encontrar caminhão mais adequado
   const caminhaoSugerido = caminhoes
