@@ -74,10 +74,6 @@ export default function Dashboard({ caminhoes, rotas, configuracoes }: Dashboard
             pontoPartida={rotaAtiva?.pontoPartida || configuracaoPadrao?.endereco}
             rotaOtimizada={true} 
           />
-            pedidos={pedidosParaMapa} 
-            pontoPartida={rotaAtiva?.pontoPartida || configuracaoPadrao?.endereco}
-            rotaOtimizada={true} 
-          />
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">

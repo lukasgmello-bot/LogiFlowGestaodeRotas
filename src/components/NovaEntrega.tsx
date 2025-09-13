@@ -201,7 +201,6 @@ export default function NovaEntrega({ pedidos, setPedidos, configuracoes, setTel
             onClick={() => setTelaAtiva('otimizacao')}
             className="w-full flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
             data-ponto-partida={pontoPartidaAtual}
-            data-ponto-partida={pontoPartidaAtual}
           >
             <Route className="w-5 h-5 mr-2" />
             Simular Otimização de Rota
