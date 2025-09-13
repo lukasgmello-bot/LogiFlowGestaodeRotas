@@ -6,7 +6,6 @@ import { Pedido } from '../types';
 interface MapaRealProps {
   pedidos: Pedido[];
   pontoPartida?: string;
-  pontoPartida?: string;
   rotaOtimizada?: boolean;
   altura?: string;
 }

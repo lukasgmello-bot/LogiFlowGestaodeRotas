@@ -18,7 +18,7 @@ function App() {
   
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [rotas, setRotas] = useState<Rota[]>([]);
-  const [pontosPartida, setPontosPartida] = useState<PontoPartida[]>([
+  const [pontosPartida, setPontosPartida] = useState<ConfiguracaoRota[]>([
     {
       id: '1',
       nome: 'Centro de Distribuição Minami',
@@ -140,7 +140,7 @@ function App() {
           />
         );
       default:
-        return <Dashboard caminhoes={caminhoes} rotas={rotas} pontoPartida={pontoAtual} />;
+        return <Dashboard caminhoes={caminhoes} rotas={rotas} configuracoes={pontosPartida} />;
     }
   };
 

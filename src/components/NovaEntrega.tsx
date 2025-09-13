@@ -15,7 +15,6 @@ interface NovaEntregaProps {
 export default function NovaEntrega({ pedidos, setPedidos, configuracoes, setTelaAtiva }: NovaEntregaProps) {
   const [endereco, setEndereco] = useState('');
   const [volume, setVolume] = useState('');
-  const [pontoPartidaSelecionado, setPontoPartidaSelecionado] = useState('');
 
   const adicionarPedido = () => {
     if (!endereco || !volume) return;
@@ -38,7 +37,7 @@ export default function NovaEntrega({ pedidos, setPedidos, configuracoes, setTel
 
   const volumeTotal = pedidos.reduce((acc, p) => acc + p.volume, 0);
   const configuracaoPadrao = configuracoes.find(c => c.padrao);
-  const pontoPartidaAtual = pontoPartidaSelecionado 
+  const pontoPartidaAtual = pontoPartidaSelecionado
     ? configuracoes.find(c => c.id === pontoPartidaSelecionado)?.endereco
     : configuracaoPadrao?.endereco;
 
@@ -49,42 +48,6 @@ export default function NovaEntrega({ pedidos, setPedidos, configuracoes, setTel
           <Package className="w-6 h-6 mr-2 text-blue-600" />
           Nova Carga de Entregas
         </h2>
-
-        {/* Seleção do Ponto de Partida */}
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="font-medium text-blue-900 flex items-center">
-              <MapPin className="w-4 h-4 mr-2" />
-              Ponto de Partida
-            </h4>
-            <button
-              onClick={() => setTelaAtiva('configuracao-rotas')}
-              className="flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
-            >
-              <Settings className="w-4 h-4 mr-1" />
-              Configurar
-            </button>
-          </div>
-          
-          <select
-            value={pontoPartidaSelecionado}
-            onChange={(e) => setPontoPartidaSelecionado(e.target.value)}
-            className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-          >
-            <option value="">Usar padrão</option>
-            {configuracoes.map((config) => (
-              <option key={config.id} value={config.id}>
-                {config.nome} {config.padrao ? '(Padrão)' : ''}
-              </option>
-            ))}
-          </select>
-          
-          {pontoPartidaAtual && (
-            <p className="text-sm text-blue-700 mt-2">
-              <span className="font-medium">Endereço:</span> {pontoPartidaAtual}
-            </p>
-          )}
-        </div>
 
         {/* Seleção do Ponto de Partida */}
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
