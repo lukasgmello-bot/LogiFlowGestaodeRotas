@@ -21,7 +21,7 @@ export default function CadastroCaminhoes({ caminhoes, setCaminhoes }: CadastroC
     const novoCaminhao: Caminhao = {
       id: Date.now().toString(),
       placa: placaFormatada,
-      capacidade: parseFloat(capacidade),
+      capacidade: parseFloat(capacidade) || 0,
       status: 'Livre',
       rodizio,
       pedidosAlocados: [],
@@ -38,15 +38,17 @@ export default function CadastroCaminhoes({ caminhoes, setCaminhoes }: CadastroC
   };
 
   const formatarPlaca = (valor: string) => {
-    // Remove caracteres não alfanuméricos e converte para maiúsculas
-    const apenasAlfanumericos = valor.replace(/[^A-Z0-9]/g, '').toUpperCase();
-    
-    // Limita a 7 caracteres
+    const apenasAlfanumericos = valor.replace(/[^A-Z0-9]/gi, '').toUpperCase();
     return apenasAlfanumericos.slice(0, 7);
+  };
+
+  const formatarVolume = (valor?: number) => {
+    return typeof valor === 'number' ? valor.toFixed(1) : '0.0';
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Formulário de cadastro */}
       <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
         <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
           <Truck className="w-6 h-6 mr-2 text-blue-600" />
@@ -68,7 +70,7 @@ export default function CadastroCaminhoes({ caminhoes, setCaminhoes }: CadastroC
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors uppercase"
             />
           </div>
-          
+
           <div>
             <label htmlFor="capacidade" className="block text-sm font-medium text-gray-700 mb-2">
               Capacidade (m³)
@@ -109,6 +111,7 @@ export default function CadastroCaminhoes({ caminhoes, setCaminhoes }: CadastroC
         )}
       </div>
 
+      {/* Tabela de caminhões */}
       {caminhoes.length > 0 && (
         <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-200">
@@ -129,57 +132,63 @@ export default function CadastroCaminhoes({ caminhoes, setCaminhoes }: CadastroC
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {caminhoes.map((caminhao) => (
-                  <tr key={caminhao.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {caminhao.placa}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {caminhao.capacidade} m³
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center">
-                        {caminhao.rodizio}
-                        {verificarRodizioHoje(caminhao.rodizio) && (
-                          <span className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                            Hoje
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        caminhao.status === 'Livre' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-orange-100 text-orange-800'
-                      }`}>
-                        {caminhao.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full" 
-                            style={{ width: `${(caminhao.volumeOcupado / caminhao.capacidade) * 100}%` }}
-                          ></div>
+                {caminhoes.map((caminhao) => {
+                  const capacidadeVal = caminhao.capacidade || 0;
+                  const volumeOcupadoVal = caminhao.volumeOcupado || 0;
+                  const ocupacaoPercent = capacidadeVal ? (volumeOcupadoVal / capacidadeVal) * 100 : 0;
+
+                  return (
+                    <tr key={caminhao.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {caminhao.placa}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {capacidadeVal} m³
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="flex items-center">
+                          {caminhao.rodizio}
+                          {verificarRodizioHoje(caminhao.rodizio) && (
+                            <span className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                              Hoje
+                            </span>
+                          )}
                         </div>
-                        <span className="text-xs">
-                          {caminhao.volumeOcupado.toFixed(1)}/{caminhao.capacidade}m³
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          caminhao.status === 'Livre' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {caminhao.status}
                         </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button
-                        onClick={() => removerCaminhao(caminhao.id)}
-                        disabled={caminhao.status === 'Alocado'}
-                        className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="flex items-center">
+                          <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full" 
+                              style={{ width: `${ocupacaoPercent}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-xs">
+                            {formatarVolume(volumeOcupadoVal)}/{capacidadeVal} m³
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button
+                          onClick={() => removerCaminhao(caminhao.id)}
+                          disabled={caminhao.status === 'Alocado'}
+                          className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
