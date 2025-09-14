@@ -9,21 +9,31 @@ interface DashboardProps {
   configuracoes: ConfiguracaoRota[];
 }
 
-export default function Dashboard({ caminhoes, rotas, configuracoes }: DashboardProps) {
+export default function Dashboard({ caminhoes = [], rotas = [], configuracoes = [] }: DashboardProps) {
   const caminhaoLivre = caminhoes.filter(c => c.status === 'Livre').length;
-  const entregasHoje = rotas.filter(r => r.status === 'Em Andamento').reduce((acc, r) => acc + r.pedidos.length, 0);
-  const kmPrevistos = rotas.filter(r => r.status === 'Em Andamento').reduce((acc, r) => acc + r.distanciaTotal, 0);
-  
+
+  const entregasHoje = rotas
+    .filter(r => r.status === 'Em Andamento')
+    .reduce((acc, r) => acc + (r.pedidos?.length || 0), 0);
+
+  const kmPrevistos = rotas
+    .filter(r => r.status === 'Em Andamento')
+    .reduce((acc, r) => acc + (r.distanciaTotal || 0), 0);
+
   const pedidosParaMapa = rotas
     .filter(r => r.status === 'Em Andamento')
-    .flatMap(r => r.pedidos)
+    .flatMap(r => r.pedidos || [])
     .slice(0, 6);
 
   const configuracaoPadrao = configuracoes.find(c => c.padrao);
   const rotaAtiva = rotas.find(r => r.status === 'Em Andamento');
 
+  // Garantir que sempre haverá um ponto de partida válido
+  const pontoPartida = rotaAtiva?.pontoPartida || configuracaoPadrao?.endereco || { lat: 0, lng: 0 };
+
   return (
     <div className="space-y-6">
+      {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
           <div className="flex items-center justify-between">
@@ -62,6 +72,7 @@ export default function Dashboard({ caminhoes, rotas, configuracoes }: Dashboard
         </div>
       </div>
 
+      {/* Rotas e Frota */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -70,7 +81,7 @@ export default function Dashboard({ caminhoes, rotas, configuracoes }: Dashboard
           </h3>
           <MapaReal 
             pedidos={pedidosParaMapa} 
-            pontoPartida={rotaAtiva?.pontoPartida || configuracaoPadrao?.endereco}
+            pontoPartida={pontoPartida}
             rotaOtimizada={true} 
           />
         </div>
@@ -84,19 +95,21 @@ export default function Dashboard({ caminhoes, rotas, configuracoes }: Dashboard
             {caminhoes.slice(0, 5).map((caminhao) => (
               <div key={caminhao.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
-                  <p className="font-medium text-gray-900">{caminhao.placa}</p>
-                  <p className="text-sm text-gray-500">{caminhao.capacidade}m³</p>
+                  <p className="font-medium text-gray-900">{caminhao.placa || 'Sem placa'}</p>
+                  <p className="text-sm text-gray-500">{caminhao.capacidade || 0}m³</p>
                 </div>
                 <div className="text-right">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    caminhao.status === 'Livre' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-orange-100 text-orange-800'
-                  }`}>
-                    {caminhao.status}
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      caminhao.status === 'Livre' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-orange-100 text-orange-800'
+                    }`}
+                  >
+                    {caminhao.status || 'Indefinido'}
                   </span>
                   <p className="text-xs text-gray-500 mt-1">
-                    {caminhao.volumeOcupado.toFixed(1)}/{caminhao.capacidade}m³
+                    {(caminhao.volumeOcupado || 0).toFixed(1)}/{caminhao.capacidade || 0}m³
                   </p>
                 </div>
               </div>
