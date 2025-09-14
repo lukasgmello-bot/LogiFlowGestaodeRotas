@@ -12,7 +12,14 @@ interface NovaEntregaProps {
   setTelaAtiva: (tela: TelaAtiva) => void;
 }
 
-export default function NovaEntrega({ pedidos, setPedidos, configuracoes, setTelaAtiva }: NovaEntregaProps) {
+export default function NovaEntrega({ 
+  pedidos, 
+  setPedidos, 
+  configuracoes, 
+  pontoPartidaSelecionado,     // ✅ agora está aqui
+  setPontoPartidaSelecionado,  // ✅ agora está aqui
+  setTelaAtiva 
+}: NovaEntregaProps) {
   const [endereco, setEndereco] = useState('');
   const [volume, setVolume] = useState('');
 
