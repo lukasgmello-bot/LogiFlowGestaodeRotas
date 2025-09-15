@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Truck, MapPin, BarChart3, Settings, Plus } from 'lucide-react';
+import { Truck, MapPin, BarChart3, Settings, Plus, User } from 'lucide-react';
+import AuthWrapper from './components/auth/AuthWrapper';
 import Dashboard from './components/Dashboard';
 import NovaEntrega from './components/NovaEntrega';
 import OtimizacaoRotas from './components/OtimizacaoRotas';
 import Relatorios from './components/Relatorios';
 import CadastroCaminhoes from './components/CadastroCaminhoes';
 import ConfiguracaoRotas from './components/ConfiguracaoRotas';
-import { Caminhao, Pedido, Rota, PontoPartida } from './types';
+import { Caminhao, Pedido, Rota, ConfiguracaoRota, AuthState } from './types';
 
-function App() {
+function AppContent({ authState }: { authState: AuthState }) {
   const [telaAtiva, setTelaAtiva] = useState('dashboard');
   const [caminhoes, setCaminhoes] = useState<Caminhao[]>([
     { id: '1', placa: 'ABC-1234', capacidade: 15, status: 'livre' },
@@ -96,7 +97,8 @@ function App() {
     { id: 'nova-entrega', label: 'Nova Carga', icon: Plus },
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },
     { id: 'caminhoes', label: 'Caminhões', icon: Truck },
-    { id: 'configuracoes', label: 'Configurações', icon: Settings }
+    { id: 'configuracoes', label: 'Configurações', icon: Settings },
+    { id: 'perfil', label: 'Perfil', icon: User }
   ];
 
   const renderTela = () => {
@@ -139,6 +141,11 @@ function App() {
             setConfiguracoes={setPontosPartida}
           />
         );
+      case 'perfil':
+        // Redirecionar para o componente de perfil através do AuthWrapper
+        window.location.hash = 'profile';
+        window.location.reload();
+        return null;
       default:
         return <Dashboard caminhoes={caminhoes} rotas={rotas} configuracoes={pontosPartida} />;
     }
@@ -154,8 +161,17 @@ function App() {
               <MapPin className="w-8 h-8 text-blue-600 mr-3" />
               <h1 className="text-2xl font-bold text-gray-900">LogiFlow</h1>
             </div>
-            <div className="text-sm text-gray-500">
-              Sistema de Gestão de Entregas
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-gray-500">
+                Olá, <span className="font-medium text-gray-700">{authState.user?.nome}</span>
+              </div>
+              <button
+                onClick={() => setTelaAtiva('perfil')}
+                className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <User className="w-4 h-4" />
+                <span>Perfil</span>
+              </button>
             </div>
           </div>
         </div>
@@ -194,6 +210,14 @@ function App() {
         </main>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthWrapper>
+      {(authState) => <AppContent authState={authState} />}
+    </AuthWrapper>
   );
 }
 

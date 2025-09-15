@@ -33,3 +33,16 @@ export interface ConfiguracaoRota {
   endereco: string;
   padrao: boolean;
 }
+
+export interface Usuario {
+  id: string;
+  nome: string;
+  email: string;
+  telefone?: string;
+}
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  user: Usuario | null;
+  token: string | null;
+}

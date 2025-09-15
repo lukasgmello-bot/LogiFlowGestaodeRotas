@@ -1,0 +1,260 @@
+import React, { useState } from 'react';
+import { UserPlus, Mail, Lock, User, Phone, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { authService } from '../../services/auth';
+
+interface RegisterProps {
+  onNavigate: (screen: 'login' | 'register' | 'forgot-password') => void;
+}
+
+export default function Register({ onNavigate }: RegisterProps) {
+  const [formData, setFormData] = useState({
+    nome: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    telefone: ''
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const validateForm = () => {
+    if (!formData.nome.trim()) {
+      setError('Nome é obrigatório');
+      return false;
+    }
+
+    if (!formData.email.trim()) {
+      setError('Email é obrigatório');
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Email inválido');
+      return false;
+    }
+
+    if (formData.password.length < 8) {
+      setError('Senha deve ter pelo menos 8 caracteres');
+      return false;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Senhas não coincidem');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!validateForm()) return;
+
+    setLoading(true);
+
+    try {
+      await authService.register({
+        nome: formData.nome,
+        email: formData.email,
+        password: formData.password,
+        telefone: formData.telefone
+      });
+
+      setSuccess(true);
+      setTimeout(() => {
+        onNavigate('login');
+      }, 2000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setError('');
+  };
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mb-4">
+            <CheckCircle className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Conta criada com sucesso!</h1>
+          <p className="text-gray-600 mb-4">Redirecionando para o login...</p>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-600 rounded-full mb-4">
+            <UserPlus className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Criar Conta</h1>
+          <p className="text-gray-600 mt-2">Preencha os dados para se cadastrar</p>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
+            <p className="text-red-800 text-sm">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-2">
+              Nome Completo *
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                id="nome"
+                value={formData.nome}
+                onChange={(e) => handleInputChange('nome', e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                placeholder="Seu nome completo"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              Email *
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="email"
+                id="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                placeholder="seu@email.com"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-2">
+              Telefone (opcional)
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="tel"
+                id="telefone"
+                value={formData.telefone}
+                onChange={(e) => handleInputChange('telefone', e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                placeholder="(11) 99999-9999"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              Senha * (mín. 8 caracteres)
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                value={formData.password}
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                placeholder="Sua senha"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              Confirmar Senha *
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                id="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                placeholder="Confirme sua senha"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          >
+            {loading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+            ) : (
+              <>
+                <UserPlus className="w-5 h-5 mr-2" />
+                Criar Conta
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-gray-600 text-sm">
+            Já tem uma conta?{' '}
+            <button
+              onClick={() => onNavigate('login')}
+              className="text-purple-600 hover:text-purple-800 font-medium transition-colors"
+            >
+              Fazer login
+            </button>
+          </p>
+        </div>
+
+        <div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+          <p className="text-purple-800 text-xs font-medium mb-2">Para testar o cadastro:</p>
+          <p className="text-purple-700 text-xs">
+            Use qualquer email válido (ex: teste@teste.com)<br />
+            Senha: qualquer senha com 8+ caracteres
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
