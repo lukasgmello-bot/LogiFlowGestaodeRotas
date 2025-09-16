@@ -163,7 +163,7 @@ function AppContent({ authState }: { authState: AuthState }) {
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-sm text-gray-500">
-                Olá, <span className="font-medium text-gray-700">{authState.user?.nome}</span>
+                Bem-vindo ao LogiFlow, <span className="font-medium text-gray-700">{authState.user?.nome || authState.user?.email}</span>
               </div>
               <button
                 onClick={() => setTelaAtiva('perfil')}

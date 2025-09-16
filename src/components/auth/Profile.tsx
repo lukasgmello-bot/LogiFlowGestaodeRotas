@@ -216,7 +216,7 @@ export default function Profile({ user, onLogout, onUpdateUser }: ProfileProps) 
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-blue-800 text-xs font-medium mb-1">Token de Autenticação:</p>
           <p className="text-blue-700 text-xs font-mono break-all">
-            {authService.getToken()?.substring(0, 20)}...
+            {authService.getToken()}
           </p>
         </div>
       </div>

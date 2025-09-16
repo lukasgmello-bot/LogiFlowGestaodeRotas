@@ -22,12 +22,12 @@ export default function Login({ onLogin, onNavigate }: LoginProps) {
     try {
       const response = await authService.login({ email, password });
       
-      // Buscar dados do usuário (simulado)
+      // Criar dados do usuário baseado no email
       const userData = {
-        id: '1',
-        nome: 'Usuário Teste',
+        id: response.id || '1',
+        nome: email.split('@')[0], // Usar parte do email como nome
         email: email,
-        telefone: '(11) 99999-9999'
+        telefone: ''
       };
 
       authService.saveToken(response.token);

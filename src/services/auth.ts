@@ -6,13 +6,15 @@ interface LoginRequest {
 interface RegisterRequest {
   email: string;
   password: string;
-  nome: string;
-  telefone?: string;
 }
 
 interface AuthResponse {
   token: string;
-  id?: number;
+  id?: string;
+}
+
+interface ErrorResponse {
+  error: string;
 }
 
 export const authService = {
@@ -26,7 +28,7 @@ export const authService = {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error: ErrorResponse = await response.json();
       throw new Error(error.error || 'Erro ao fazer login');
     }
 
@@ -39,40 +41,27 @@ export const authService = {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        email: userData.email,
-        password: userData.password,
-      }),
+      body: JSON.stringify(userData),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error: ErrorResponse = await response.json();
       throw new Error(error.error || 'Erro ao criar conta');
     }
 
     return response.json();
   },
 
-  async getUserProfile(userId: string): Promise<any> {
-    const response = await fetch(`https://dummyjson.com/users/${userId}`);
-    
-    if (!response.ok) {
-      throw new Error('Erro ao buscar perfil do usuário');
-    }
-
-    return response.json();
-  },
-
   saveToken(token: string): void {
-    localStorage.setItem('auth_token', token);
+    localStorage.setItem('token', token);
   },
 
   getToken(): string | null {
-    return localStorage.getItem('auth_token');
+    return localStorage.getItem('token');
   },
 
   removeToken(): void {
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem('token');
   },
 
   saveUser(user: any): void {

@@ -81,6 +81,7 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     switch (currentScreen) {
       case 'register':
         return <Register onNavigate={handleNavigate} />;
+        return <Register onRegister={handleLogin} onNavigate={handleNavigate} />;
       case 'forgot-password':
         return <ForgotPassword onNavigate={handleNavigate} />;
       case 'profile':

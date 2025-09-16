@@ -3,29 +3,22 @@ import { UserPlus, Mail, Lock, User, Phone, Eye, EyeOff, AlertCircle, CheckCircl
 import { authService } from '../../services/auth';
 
 interface RegisterProps {
+  onRegister: (token: string, user: any) => void;
   onNavigate: (screen: 'login' | 'register' | 'forgot-password') => void;
 }
 
-export default function Register({ onNavigate }: RegisterProps) {
+export default function Register({ onRegister, onNavigate }: RegisterProps) {
   const [formData, setFormData] = useState({
-    nome: '',
     email: '',
     password: '',
     confirmPassword: '',
-    telefone: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
 
   const validateForm = () => {
-    if (!formData.nome.trim()) {
-      setError('Nome é obrigatório');
-      return false;
-    }
-
     if (!formData.email.trim()) {
       setError('Email é obrigatório');
       return false;
@@ -59,17 +52,23 @@ export default function Register({ onNavigate }: RegisterProps) {
     setLoading(true);
 
     try {
-      await authService.register({
-        nome: formData.nome,
+      const response = await authService.register({
         email: formData.email,
         password: formData.password,
-        telefone: formData.telefone
       });
 
-      setSuccess(true);
-      setTimeout(() => {
-        onNavigate('login');
-      }, 2000);
+      // Criar dados do usuário baseado no email
+      const userData = {
+        id: response.id || '1',
+        nome: formData.email.split('@')[0], // Usar parte do email como nome
+        email: formData.email,
+        telefone: ''
+      };
+
+      authService.saveToken(response.token);
+      authService.saveUser(userData);
+      
+      onRegister(response.token, userData);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -81,21 +80,6 @@ export default function Register({ onNavigate }: RegisterProps) {
     setFormData(prev => ({ ...prev, [field]: value }));
     setError('');
   };
-
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mb-4">
-            <CheckCircle className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Conta criada com sucesso!</h1>
-          <p className="text-gray-600 mb-4">Redirecionando para o login...</p>
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto"></div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 flex items-center justify-center p-4">
@@ -115,25 +99,7 @@ export default function Register({ onNavigate }: RegisterProps) {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-2">
-              Nome Completo *
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                id="nome"
-                value={formData.nome}
-                onChange={(e) => handleInputChange('nome', e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                placeholder="Seu nome completo"
-                required
-              />
-            </div>
-          </div>
-
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               Email *
@@ -148,23 +114,6 @@ export default function Register({ onNavigate }: RegisterProps) {
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                 placeholder="seu@email.com"
                 required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-2">
-              Telefone (opcional)
-            </label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="tel"
-                id="telefone"
-                value={formData.telefone}
-                onChange={(e) => handleInputChange('telefone', e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                placeholder="(11) 99999-9999"
               />
             </div>
           </div>
@@ -250,8 +199,8 @@ export default function Register({ onNavigate }: RegisterProps) {
         <div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
           <p className="text-purple-800 text-xs font-medium mb-2">Para testar o cadastro:</p>
           <p className="text-purple-700 text-xs">
-            Use qualquer email válido (ex: teste@teste.com)<br />
-            Senha: qualquer senha com 8+ caracteres
+            Email: eve.holt@reqres.in<br />
+            Senha: pistol (ou qualquer senha com 8+ caracteres)
           </p>
         </div>
       </div>
