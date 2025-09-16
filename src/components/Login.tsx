@@ -20,10 +20,18 @@ export default function Login({ onLogin, onNavigate }: LoginProps) {
     setLoading(true)
 
     try {
-      await authService.signIn(email, password)
+      const { user, session } = await authService.signIn(email, password)
+
+      if (!user) {
+        setError('Usuário não encontrado.')
+        return
+      }
+
+      // Login bem-sucedido, chamar callback
       onLogin()
     } catch (err: any) {
-      setError(err.message)
+      console.error('Erro ao fazer login:', err)
+      setError(err.message || 'Erro ao fazer login.')
     } finally {
       setLoading(false)
     }
