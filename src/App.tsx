@@ -14,16 +14,14 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Verificar se há usuário logado
+    // Função para verificar se há usuário logado
     const checkAuth = async () => {
       try {
-        const current = await authService.getCurrentUser()
-        const authUser = current?.user || null
+        const result = await authService.getCurrentUser()
+        const authUser = result?.data?.user || null
 
         if (authUser) {
-          // Buscar perfil do usuário
           const profile = await authService.getProfile(authUser.id)
-
           if (profile) {
             setUser({
               id: authUser.id,
@@ -42,7 +40,7 @@ function App() {
 
     checkAuth()
 
-    // Escutar mudanças de autenticação
+    // Listener de mudanças na autenticação
     const { subscription } = authService.onAuthStateChange(async (authUser) => {
       if (authUser) {
         const profile = await authService.getProfile(authUser.id)
@@ -60,28 +58,26 @@ function App() {
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => subscription?.unsubscribe()
   }, [])
 
-  const handleLogin = async () => {
-    // O listener já atualiza o user
+  const handleLogin = () => {
+    // A autenticação será detectada pelo listener
   }
 
-  const handleRegister = async () => {
-    // O listener já atualiza o user
+  const handleRegister = () => {
+    // A autenticação será detectada pelo listener
   }
 
   const handleLogout = async () => {
-    try {
-      await authService.signOut()
-      setUser(null)
-      setCurrentScreen('login')
-    } catch (err) {
-      console.error('Erro ao fazer logout:', err)
-    }
+    await authService.signOut()
+    setUser(null)
+    setCurrentScreen('login')
   }
 
-  const handleNavigate = (screen: Screen) => setCurrentScreen(screen)
+  const handleNavigate = (screen: Screen) => {
+    setCurrentScreen(screen)
+  }
 
   if (loading) {
     return (
