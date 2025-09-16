@@ -17,12 +17,13 @@ function App() {
     // Verificar se há usuário logado
     const checkAuth = async () => {
       try {
-        const { data: { user: authUser } } = await authService.getCurrentUser()
-        
+        const current = await authService.getCurrentUser()
+        const authUser = current?.user || null
+
         if (authUser) {
-          // Buscar dados do perfil
+          // Buscar perfil do usuário
           const profile = await authService.getProfile(authUser.id)
-          
+
           if (profile) {
             setUser({
               id: authUser.id,
@@ -42,7 +43,7 @@ function App() {
     checkAuth()
 
     // Escutar mudanças de autenticação
-    const { data: { subscription } } = authService.onAuthStateChange(async (authUser) => {
+    const { subscription } = authService.onAuthStateChange(async (authUser) => {
       if (authUser) {
         const profile = await authService.getProfile(authUser.id)
         if (profile) {
@@ -63,23 +64,24 @@ function App() {
   }, [])
 
   const handleLogin = async () => {
-    // A autenticação será detectada pelo listener
-    // Não precisamos fazer nada aqui
+    // O listener já atualiza o user
   }
 
   const handleRegister = async () => {
-    // A autenticação será detectada pelo listener
-    // Não precisamos fazer nada aqui
+    // O listener já atualiza o user
   }
 
-  const handleLogout = () => {
-    setUser(null)
-    setCurrentScreen('login')
+  const handleLogout = async () => {
+    try {
+      await authService.signOut()
+      setUser(null)
+      setCurrentScreen('login')
+    } catch (err) {
+      console.error('Erro ao fazer logout:', err)
+    }
   }
 
-  const handleNavigate = (screen: Screen) => {
-    setCurrentScreen(screen)
-  }
+  const handleNavigate = (screen: Screen) => setCurrentScreen(screen)
 
   if (loading) {
     return (
@@ -94,32 +96,13 @@ function App() {
 
   switch (currentScreen) {
     case 'register':
-      return (
-        <Register
-          onRegister={handleRegister}
-          onNavigate={handleNavigate}
-        />
-      )
+      return <Register onRegister={handleRegister} onNavigate={handleNavigate} />
     case 'forgot-password':
-      return (
-        <ForgotPassword
-          onNavigate={handleNavigate}
-        />
-      )
+      return <ForgotPassword onNavigate={handleNavigate} />
     case 'dashboard':
-      return user ? (
-        <Dashboard
-          user={user}
-          onLogout={handleLogout}
-        />
-      ) : null
+      return user ? <Dashboard user={user} onLogout={handleLogout} /> : null
     default:
-      return (
-        <Login
-          onLogin={handleLogin}
-          onNavigate={handleNavigate}
-        />
-      )
+      return <Login onLogin={handleLogin} onNavigate={handleNavigate} />
   }
 }
 
