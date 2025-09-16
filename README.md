@@ -1,64 +1,165 @@
-# LogiFlow - SaaS de Gestão de Rotas de Entrega
+# LogiFlow - Sistema de Autenticação com Supabase
 
-Sistema completo para gestão e otimização de rotas de entrega com integração ao Google Maps.
+Sistema completo de autenticação usando React + TypeScript + TailwindCSS + Supabase.
 
-## Configuração da API do Google Maps
+## 🚀 Funcionalidades
 
-Para utilizar o mapa real com rotas otimizadas, você precisa configurar uma chave da API do Google Maps:
+- ✅ **Login** com email e senha
+- ✅ **Cadastro** de novos usuários
+- ✅ **Recuperação de senha** via email
+- ✅ **Dashboard** protegido após login
+- ✅ **Logout** com limpeza de sessão
+- ✅ **Persistência de sessão** automática
 
-### 1. Obter Chave da API
+## 🛠️ Tecnologias
 
-1. Acesse o [Google Cloud Console](https://console.cloud.google.com/)
-2. Crie um novo projeto ou selecione um existente
-3. Ative as seguintes APIs:
-   - Maps JavaScript API
-   - Directions API
-   - Places API
-   - Geocoding API
+- **React 18** + **TypeScript**
+- **TailwindCSS** para estilização
+- **Supabase** para autenticação e banco de dados
+- **Lucide React** para ícones
+- **Vite** como bundler
 
-4. Vá para "Credenciais" e crie uma nova chave de API
-5. Configure as restrições da chave para maior segurança
+## 📋 Pré-requisitos
 
-### 2. Configurar no Projeto
+### 1. Configuração do Banco de Dados
 
-1. Abra o arquivo `.env` na raiz do projeto
-2. Substitua `your_google_maps_api_key_here` pela sua chave real:
+Execute este SQL no Supabase SQL Editor para criar a tabela `profiles`:
 
-```env
-VITE_GOOGLE_MAPS_API_KEY=AIzaSyBvOkBwGyD...sua_chave_aqui
+```sql
+-- Criar tabela profiles
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  nome TEXT NOT NULL,
+  email TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Habilitar RLS (Row Level Security)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- Política para usuários lerem seus próprios dados
+CREATE POLICY "Users can read own profile" ON public.profiles
+  FOR SELECT USING (auth.uid() = id);
+
+-- Política para usuários criarem seus próprios dados
+CREATE POLICY "Users can create own profile" ON public.profiles
+  FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- Política para usuários atualizarem seus próprios dados
+CREATE POLICY "Users can update own profile" ON public.profiles
+  FOR UPDATE USING (auth.uid() = id);
+
+-- Função para atualizar updated_at automaticamente
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para atualizar updated_at
+CREATE TRIGGER profiles_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
 ```
 
-### 3. Ponto de Partida Fixo
+### 2. Configuração de Email (Opcional)
 
-O sistema está configurado para usar como ponto de partida:
-**75 - Estr. do Minami, sem número - Hiroy, Biritiba Mirim - SP, 08940-000**
+Para testar recuperação de senha, configure um provedor de email no Supabase:
 
-## Funcionalidades
+1. Vá em **Authentication > Settings**
+2. Configure **SMTP Settings** ou use um provedor como SendGrid
+3. Ative **Enable email confirmations** se desejar
 
-- **Dashboard**: Visão geral com métricas e mapa de rotas ativas
-- **Nova Carga**: Cadastro de pedidos com visualização no mapa
-- **Otimização de Rotas**: Cálculo automático da melhor rota com Google Maps
-- **Relatórios**: Análise de performance da frota
-- **Cadastro de Caminhões**: Gestão da frota com controle de rodízio
+## 🎯 Como Testar
 
-## Tecnologias
+### 1. Cadastro de Usuário
+1. Clique em "Criar conta"
+2. Preencha: Nome, Email, Senha, Confirmar Senha
+3. Clique em "Criar Conta"
+4. ✅ Usuário será criado e redirecionado para o Dashboard
 
-- React + TypeScript
-- Tailwind CSS
-- Google Maps JavaScript API
-- Lucide React (ícones)
-- Vite
+### 2. Login
+1. Use o email e senha cadastrados
+2. Clique em "Entrar"
+3. ✅ Será redirecionado para o Dashboard
 
-## Como Executar
+### 3. Recuperação de Senha
+1. Na tela de login, clique "Esqueci minha senha"
+2. Digite seu email
+3. Clique "Enviar Link de Recuperação"
+4. ✅ Email será enviado (se SMTP configurado)
 
-```bash
-npm install
-npm run dev
+### 4. Logout
+1. No Dashboard, clique no botão "Sair"
+2. ✅ Será redirecionado para a tela de login
+
+## 🔧 Estrutura do Projeto
+
+```
+src/
+├── components/
+│   ├── Login.tsx           # Tela de login
+│   ├── Register.tsx        # Tela de cadastro
+│   ├── ForgotPassword.tsx  # Recuperação de senha
+│   └── Dashboard.tsx       # Dashboard após login
+├── services/
+│   └── authService.ts      # Serviços de autenticação
+├── lib/
+│   └── supabase.ts         # Configuração do Supabase
+├── types/
+│   └── auth.ts             # Tipos TypeScript
+└── App.tsx                 # Componente principal
 ```
 
-## Observações
+## 🎨 Design
 
-- Sem a chave da API configurada, o sistema mostrará uma mensagem de erro nos mapas
-- O sistema funciona normalmente para todas as outras funcionalidades
-- As rotas são calculadas em tempo real usando a API do Google Maps
-- O sistema otimiza automaticamente a ordem das entregas para menor distância
+- **Login**: Gradiente azul/indigo
+- **Cadastro**: Gradiente roxo/rosa
+- **Recuperação**: Gradiente laranja/âmbar
+- **Dashboard**: Gradiente azul/indigo
+- **Responsivo**: Funciona em mobile e desktop
+- **Animações**: Loading states e transições suaves
+
+## 🔒 Segurança
+
+- ✅ **RLS (Row Level Security)** habilitado
+- ✅ **Políticas de acesso** configuradas
+- ✅ **Validação de formulários** no frontend
+- ✅ **Senhas criptografadas** pelo Supabase
+- ✅ **Tokens JWT** para autenticação
+- ✅ **Sessões persistentes** com renovação automática
+
+## 🚨 Possíveis Erros e Soluções
+
+### Erro: "Invalid login credentials"
+- ✅ Verifique se o email e senha estão corretos
+- ✅ Confirme se o usuário foi cadastrado com sucesso
+
+### Erro: "Email not confirmed"
+- ✅ Desative confirmação de email em **Auth > Settings**
+- ✅ Ou configure SMTP para envio de emails
+
+### Erro: "Row Level Security policy violation"
+- ✅ Execute o SQL de criação da tabela `profiles`
+- ✅ Verifique se as políticas RLS foram criadas
+
+### Erro de conexão com Supabase
+- ✅ Verifique as variáveis de ambiente no `.env`
+- ✅ Confirme se a URL e chave estão corretas
+
+## 📞 Suporte
+
+Se encontrar problemas:
+
+1. Verifique o console do navegador para erros
+2. Confirme se a tabela `profiles` foi criada
+3. Teste com um email válido
+4. Verifique as configurações do Supabase
+
+---
+
+**🎉 Projeto pronto para uso em produção!**

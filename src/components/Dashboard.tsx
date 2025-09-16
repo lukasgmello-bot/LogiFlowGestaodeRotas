@@ -1,122 +1,106 @@
-import React from 'react';
-import { Truck, Package, Route, MapPin, TrendingUp } from 'lucide-react';
-import { Caminhao, Rota, ConfiguracaoRota } from '../types';
-import MapaReal from './MapaReal';
+import React from 'react'
+import { LogOut, User, Mail } from 'lucide-react'
+import { authService } from '../services/authService'
+import type { AuthUser } from '../types/auth'
 
 interface DashboardProps {
-  caminhoes: Caminhao[];
-  rotas: Rota[];
-  configuracoes: ConfiguracaoRota[];
+  user: AuthUser
+  onLogout: () => void
 }
 
-export default function Dashboard({ caminhoes = [], rotas = [], configuracoes = [] }: DashboardProps) {
-  const caminhaoLivre = caminhoes.filter(c => c.status === 'Livre').length;
-
-  const entregasHoje = rotas
-    .filter(r => r.status === 'Em Andamento')
-    .reduce((acc, r) => acc + (r.pedidos?.length || 0), 0);
-
-  const kmPrevistos = rotas
-    .filter(r => r.status === 'Em Andamento')
-    .reduce((acc, r) => acc + (r.distanciaTotal || 0), 0);
-
-  const pedidosParaMapa = rotas
-    .filter(r => r.status === 'Em Andamento')
-    .flatMap(r => r.pedidos || [])
-    .slice(0, 6);
-
-  const configuracaoPadrao = configuracoes.find(c => c.padrao);
-  const rotaAtiva = rotas.find(r => r.status === 'Em Andamento');
-
-  // Garantir que sempre haverá um ponto de partida válido
-  const pontoPartida = rotaAtiva?.pontoPartida || configuracaoPadrao?.endereco || { lat: 0, lng: 0 };
+export default function Dashboard({ user, onLogout }: DashboardProps) {
+  const handleLogout = async () => {
+    try {
+      await authService.signOut()
+      onLogout()
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error)
+      // Mesmo com erro, fazer logout local
+      onLogout()
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm font-medium">Entregas Hoje</p>
-              <p className="text-2xl font-bold text-gray-900">{entregasHoje}</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-gray-900">LogiFlow</h1>
             </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Package className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm font-medium">Caminhões Livres</p>
-              <p className="text-2xl font-bold text-gray-900">{caminhaoLivre}</p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <Truck className="w-6 h-6 text-green-600" />
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-gray-500">
+                Bem-vindo, <span className="font-medium text-gray-700">{user.nome}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sair</span>
+              </button>
             </div>
           </div>
         </div>
+      </header>
 
-        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm font-medium">KM Previstos</p>
-              <p className="text-2xl font-bold text-gray-900">{kmPrevistos.toFixed(0)}</p>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mb-4">
+              <User className="w-10 h-10 text-white" />
             </div>
-            <div className="p-3 bg-orange-100 rounded-lg">
-              <Route className="w-6 h-6 text-orange-600" />
-            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Bem-vindo ao LogiFlow!
+            </h1>
+            <p className="text-gray-600">
+              Sistema de gestão logística e rotas de entrega
+            </p>
           </div>
-        </div>
-      </div>
 
-      {/* Rotas e Frota */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <MapPin className="w-5 h-5 mr-2 text-blue-600" />
-            Rotas Ativas
-          </h3>
-          <MapaReal 
-            pedidos={pedidosParaMapa} 
-            pontoPartida={pontoPartida}
-            rotaOtimizada={true} 
-          />
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
-            Status da Frota
-          </h3>
-          <div className="space-y-4">
-            {caminhoes.slice(0, 5).map((caminhao) => (
-              <div key={caminhao.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">{caminhao.placa || 'Sem placa'}</p>
-                  <p className="text-sm text-gray-500">{caminhao.capacidade || 0}m³</p>
+          {/* User Info Card */}
+          <div className="max-w-md mx-auto bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 text-center">
+              Informações do Usuário
+            </h2>
+            
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
+                  <User className="w-5 h-5 text-blue-600" />
                 </div>
-                <div className="text-right">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      caminhao.status === 'Livre' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-orange-100 text-orange-800'
-                    }`}
-                  >
-                    {caminhao.status || 'Indefinido'}
-                  </span>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {(caminhao.volumeOcupado || 0).toFixed(1)}/{caminhao.capacidade || 0}m³
-                  </p>
+                <div>
+                  <p className="text-sm text-gray-500">Nome</p>
+                  <p className="font-medium text-gray-900">{user.nome}</p>
                 </div>
               </div>
-            ))}
+
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-purple-100 rounded-full">
+                  <Mail className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="font-medium text-gray-900">{user.email}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Fazer Logout</span>
+            </button>
           </div>
         </div>
-      </div>
+      </main>
     </div>
-  );
+  )
 }

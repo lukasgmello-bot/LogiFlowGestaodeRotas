@@ -1,224 +1,126 @@
-import React, { useState } from 'react';
-import { Truck, MapPin, BarChart3, Settings, Plus, User } from 'lucide-react';
-import AuthWrapper from './components/auth/AuthWrapper';
-import Dashboard from './components/Dashboard';
-import NovaEntrega from './components/NovaEntrega';
-import OtimizacaoRotas from './components/OtimizacaoRotas';
-import Relatorios from './components/Relatorios';
-import CadastroCaminhoes from './components/CadastroCaminhoes';
-import ConfiguracaoRotas from './components/ConfiguracaoRotas';
-import { Caminhao, Pedido, Rota, ConfiguracaoRota, AuthState } from './types';
+import React, { useState, useEffect } from 'react'
+import { authService } from './services/authService'
+import type { AuthUser } from './types/auth'
+import Login from './components/Login'
+import Register from './components/Register'
+import ForgotPassword from './components/ForgotPassword'
+import Dashboard from './components/Dashboard'
 
-function AppContent({ authState }: { authState: AuthState }) {
-  const [telaAtiva, setTelaAtiva] = useState('dashboard');
-  const [caminhoes, setCaminhoes] = useState<Caminhao[]>([
-    { id: '1', placa: 'ABC-1234', capacidade: 15, status: 'livre' },
-    { id: '2', placa: 'DEF-5678', capacidade: 20, status: 'livre' },
-    { id: '3', placa: 'GHI-9012', capacidade: 25, status: 'livre' }
-  ]);
-  
-  const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [rotas, setRotas] = useState<Rota[]>([]);
-  const [pontosPartida, setPontosPartida] = useState<ConfiguracaoRota[]>([
-    {
-      id: '1',
-      nome: 'Centro de Distribuição Minami',
-      endereco: '75 - Estr. do Minami, sem número - Hiroy, Biritiba Mirim - SP, 08940-000',
-      padrao: true
-    }
-  ]);
-  const [pontoPartidaSelecionado, setPontoPartidaSelecionado] = useState<string>('1');
-
-  const adicionarCaminhao = (caminhao: Omit<Caminhao, 'id'>) => {
-    const novoCaminhao = {
-      ...caminhao,
-      id: Date.now().toString()
-    };
-    setCaminhoes([...caminhoes, novoCaminhao]);
-  };
-
-  const adicionarPedido = (pedido: Omit<Pedido, 'id'>) => {
-    const novoPedido = {
-      ...pedido,
-      id: Date.now().toString()
-    };
-    setPedidos([...pedidos, novoPedido]);
-  };
-
-  const confirmarRota = (rota: Omit<Rota, 'id'>) => {
-    const novaRota = {
-      ...rota,
-      id: Date.now().toString()
-    };
-    
-    setRotas([...rotas, novaRota]);
-    
-    setCaminhoes(caminhoes.map(caminhao => 
-      caminhao.id === rota.caminhaoId 
-        ? { ...caminhao, status: 'alocado' }
-        : caminhao
-    ));
-    
-    setPedidos([]);
-    setTelaAtiva('dashboard');
-  };
-
-  const adicionarPontoPartida = (ponto: Omit<PontoPartida, 'id'>) => {
-    const novoPonto = {
-      ...ponto,
-      id: Date.now().toString()
-    };
-    setPontosPartida([...pontosPartida, novoPonto]);
-  };
-
-  const definirPontoPadrao = (id: string) => {
-    setPontosPartida(pontosPartida.map(ponto => ({
-      ...ponto,
-      padrao: ponto.id === id
-    })));
-    setPontoPartidaSelecionado(id);
-  };
-
-  const removerPontoPartida = (id: string) => {
-    const ponto = pontosPartida.find(p => p.id === id);
-    if (ponto?.padrao) return; // Não permite remover o ponto padrão
-    
-    setPontosPartida(pontosPartida.filter(p => p.id !== id));
-    if (pontoPartidaSelecionado === id) {
-      const pontoPadrao = pontosPartida.find(p => p.padrao);
-      setPontoPartidaSelecionado(pontoPadrao?.id || pontosPartida[0]?.id || '');
-    }
-  };
-
-  const pontoAtual = pontosPartida.find(p => p.id === pontoPartidaSelecionado) || pontosPartida[0];
-
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-    { id: 'nova-entrega', label: 'Nova Carga', icon: Plus },
-    { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },
-    { id: 'caminhoes', label: 'Caminhões', icon: Truck },
-    { id: 'configuracoes', label: 'Configurações', icon: Settings },
-    { id: 'perfil', label: 'Perfil', icon: User }
-  ];
-
-  const renderTela = () => {
-    switch (telaAtiva) {
-      case 'dashboard':
-        return <Dashboard caminhoes={caminhoes} rotas={rotas} configuracoes={pontosPartida} />;
-      case 'nova-entrega':
-        return (
-          <NovaEntrega 
-            pedidos={pedidos} 
-            setPedidos={setPedidos}
-            configuracoes={pontosPartida}
-            pontoPartidaSelecionado={pontoPartidaSelecionado}
-            setPontoPartidaSelecionado={setPontoPartidaSelecionado}
-            setTelaAtiva={setTelaAtiva}
-          />
-        );
-      case 'otimizacao':
-        return (
-          <OtimizacaoRotas 
-            pedidos={pedidos}
-            setPedidos={setPedidos}
-            caminhoes={caminhoes}
-            setCaminhoes={setCaminhoes}
-            rotas={rotas}
-            setRotas={setRotas}
-            configuracoes={pontosPartida}
-            pontoPartidaSelecionado={pontoPartidaSelecionado}
-            setTelaAtiva={setTelaAtiva}
-          />
-        );
-      case 'relatorios':
-        return <Relatorios caminhoes={caminhoes} rotas={rotas} />;
-      case 'caminhoes':
-        return <CadastroCaminhoes caminhoes={caminhoes} setCaminhoes={setCaminhoes} />;
-      case 'configuracoes':
-        return (
-          <ConfiguracaoRotas
-            configuracoes={pontosPartida}
-            setConfiguracoes={setPontosPartida}
-          />
-        );
-      case 'perfil':
-        // Redirecionar para o componente de perfil através do AuthWrapper
-        window.location.hash = 'profile';
-        window.location.reload();
-        return null;
-      default:
-        return <Dashboard caminhoes={caminhoes} rotas={rotas} configuracoes={pontosPartida} />;
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <MapPin className="w-8 h-8 text-blue-600 mr-3" />
-              <h1 className="text-2xl font-bold text-gray-900">LogiFlow</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-500">
-                Bem-vindo ao LogiFlow, <span className="font-medium text-gray-700">{authState.user?.nome || authState.user?.email}</span>
-              </div>
-              <button
-                onClick={() => setTelaAtiva('perfil')}
-                className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <User className="w-4 h-4" />
-                <span>Perfil</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex">
-        {/* Sidebar */}
-        <nav className="w-64 bg-white shadow-sm min-h-screen">
-          <div className="p-4">
-            <ul className="space-y-2">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <li key={item.id}>
-                    <button
-                      onClick={() => setTelaAtiva(item.id)}
-                      className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
-                        telaAtiva === item.id
-                          ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Icon className="w-5 h-5 mr-3" />
-                      {item.label}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </nav>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          {renderTela()}
-        </main>
-      </div>
-    </div>
-  );
-}
+type Screen = 'login' | 'register' | 'forgot-password' | 'dashboard'
 
 function App() {
-  return (
-    <AuthWrapper>
-      {(authState) => <AppContent authState={authState} />}
-    </AuthWrapper>
-  );
+  const [currentScreen, setCurrentScreen] = useState<Screen>('login')
+  const [user, setUser] = useState<AuthUser | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Verificar se há usuário logado
+    const checkAuth = async () => {
+      try {
+        const { data: { user: authUser } } = await authService.getCurrentUser()
+        
+        if (authUser) {
+          // Buscar dados do perfil
+          const profile = await authService.getProfile(authUser.id)
+          
+          if (profile) {
+            setUser({
+              id: authUser.id,
+              email: authUser.email || '',
+              nome: profile.nome
+            })
+            setCurrentScreen('dashboard')
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkAuth()
+
+    // Escutar mudanças de autenticação
+    const { data: { subscription } } = authService.onAuthStateChange(async (authUser) => {
+      if (authUser) {
+        const profile = await authService.getProfile(authUser.id)
+        if (profile) {
+          setUser({
+            id: authUser.id,
+            email: authUser.email || '',
+            nome: profile.nome
+          })
+          setCurrentScreen('dashboard')
+        }
+      } else {
+        setUser(null)
+        setCurrentScreen('login')
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleLogin = async () => {
+    // A autenticação será detectada pelo listener
+    // Não precisamos fazer nada aqui
+  }
+
+  const handleRegister = async () => {
+    // A autenticação será detectada pelo listener
+    // Não precisamos fazer nada aqui
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+    setCurrentScreen('login')
+  }
+
+  const handleNavigate = (screen: Screen) => {
+    setCurrentScreen(screen)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    )
+  }
+
+  switch (currentScreen) {
+    case 'register':
+      return (
+        <Register
+          onRegister={handleRegister}
+          onNavigate={handleNavigate}
+        />
+      )
+    case 'forgot-password':
+      return (
+        <ForgotPassword
+          onNavigate={handleNavigate}
+        />
+      )
+    case 'dashboard':
+      return user ? (
+        <Dashboard
+          user={user}
+          onLogout={handleLogout}
+        />
+      ) : null
+    default:
+      return (
+        <Login
+          onLogin={handleLogin}
+          onNavigate={handleNavigate}
+        />
+      )
+  }
 }
 
-export default App;
+export default App
