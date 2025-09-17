@@ -20,18 +20,25 @@ export default function Login({ onLogin, onNavigate }: LoginProps) {
     setLoading(true)
 
     try {
-      const { user, session } = await authService.signIn(email, password)
+      const result = await authService.signIn(email, password)
 
-      if (!user) {
+      if (!result.user) {
         setError('Usuário não encontrado.')
         return
       }
 
-      // Login bem-sucedido, chamar callback
+      // Login bem-sucedido - o redirecionamento será automático via listener
       onLogin()
     } catch (err: any) {
       console.error('Erro ao fazer login:', err)
-      setError(err.message || 'Erro ao fazer login.')
+      // Tratar diferentes tipos de erro
+      if (err.message.includes('Invalid login credentials')) {
+        setError('Email ou senha incorretos.')
+      } else if (err.message.includes('Email not confirmed')) {
+        setError('Por favor, confirme seu email antes de fazer login.')
+      } else {
+        setError(err.message || 'Erro ao fazer login. Tente novamente.')
+      }
     } finally {
       setLoading(false)
     }

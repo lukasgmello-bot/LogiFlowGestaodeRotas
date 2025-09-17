@@ -14,11 +14,9 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Função para verificar se há usuário logado
     const checkAuth = async () => {
       try {
-        const result = await authService.getCurrentUser()
-        const authUser = result?.data?.user || null
+        const authUser = await authService.getCurrentUser()
 
         if (authUser) {
           const profile = await authService.getProfile(authUser.id)
@@ -28,11 +26,15 @@ function App() {
               email: authUser.email || '',
               nome: profile.nome
             })
+            // Redirecionar automaticamente para dashboard se usuário está logado
             setCurrentScreen('dashboard')
           }
         }
       } catch (error) {
         console.error('Erro ao verificar autenticação:', error)
+        // Em caso de erro, garantir que volta para login
+        setCurrentScreen('login')
+        setUser(null)
       } finally {
         setLoading(false)
       }
@@ -40,7 +42,6 @@ function App() {
 
     checkAuth()
 
-    // Listener de mudanças na autenticação
     const { subscription } = authService.onAuthStateChange(async (authUser) => {
       if (authUser) {
         const profile = await authService.getProfile(authUser.id)
@@ -50,6 +51,7 @@ function App() {
             email: authUser.email || '',
             nome: profile.nome
           })
+          // Redirecionamento automático após autenticação bem-sucedida
           setCurrentScreen('dashboard')
         }
       } else {
@@ -61,18 +63,27 @@ function App() {
     return () => subscription?.unsubscribe()
   }, [])
 
-  const handleLogin = () => {
-    // A autenticação será detectada pelo listener
+  const handleLoginSuccess = () => {
+    // O redirecionamento será feito automaticamente pelo listener de auth
+    // Este callback é mantido para compatibilidade
   }
 
-  const handleRegister = () => {
-    // A autenticação será detectada pelo listener
+  const handleRegisterSuccess = () => {
+    // O redirecionamento será feito automaticamente pelo listener de auth
+    // Este callback é mantido para compatibilidade
   }
 
   const handleLogout = async () => {
-    await authService.signOut()
-    setUser(null)
-    setCurrentScreen('login')
+    try {
+      await authService.signOut()
+      setUser(null)
+      setCurrentScreen('login')
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error)
+      // Mesmo com erro, limpar estado local
+      setUser(null)
+      setCurrentScreen('login')
+    }
   }
 
   const handleNavigate = (screen: Screen) => {
@@ -92,13 +103,13 @@ function App() {
 
   switch (currentScreen) {
     case 'register':
-      return <Register onRegister={handleRegister} onNavigate={handleNavigate} />
+      return <Register onRegister={handleRegisterSuccess} onNavigate={handleNavigate} />
     case 'forgot-password':
       return <ForgotPassword onNavigate={handleNavigate} />
     case 'dashboard':
       return user ? <Dashboard user={user} onLogout={handleLogout} /> : null
     default:
-      return <Login onLogin={handleLogin} onNavigate={handleNavigate} />
+      return <Login onLogin={handleLoginSuccess} onNavigate={handleNavigate} />
   }
 }
 

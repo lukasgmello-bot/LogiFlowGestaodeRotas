@@ -58,10 +58,19 @@ export default function Register({ onRegister, onNavigate }: RegisterProps) {
     setLoading(true)
 
     try {
-      await authService.signUp(formData.email, formData.password, formData.nome)
+      const result = await authService.signUp(formData.email, formData.password, formData.nome)
+      
+      // Cadastro bem-sucedido - o redirecionamento será automático via listener
       onRegister()
     } catch (err: any) {
-      setError(err.message)
+      // Tratar diferentes tipos de erro de cadastro
+      if (err.message.includes('User already registered')) {
+        setError('Este email já está cadastrado. Tente fazer login.')
+      } else if (err.message.includes('Password should be at least 6 characters')) {
+        setError('A senha deve ter pelo menos 6 caracteres.')
+      } else {
+        setError(err.message || 'Erro ao criar conta. Tente novamente.')
+      }
     } finally {
       setLoading(false)
     }

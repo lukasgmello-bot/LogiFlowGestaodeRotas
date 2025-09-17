@@ -15,19 +15,21 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       onLogout()
     } catch (error) {
       console.error('Erro ao fazer logout:', error)
-      // Mesmo com erro, fazer logout local
+      // Mesmo com erro, executar logout local
       onLogout()
     }
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-gray-900">LogiFlow</h1>
+              <div className="ml-4 px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                Dashboard
+              </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-sm text-gray-500">
@@ -45,7 +47,6 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
@@ -58,9 +59,11 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
             <p className="text-gray-600">
               Sistema de gestão logística e rotas de entrega
             </p>
+            <div className="mt-4 inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
+              <span className="text-sm">✅ Login realizado com sucesso!</span>
+            </div>
           </div>
 
-          {/* User Info Card */}
           <div className="max-w-md mx-auto bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 text-center">
               Informações do Usuário
@@ -89,7 +92,6 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="mt-8 flex justify-center">
             <button
               onClick={handleLogout}

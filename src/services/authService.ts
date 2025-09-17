@@ -107,9 +107,15 @@ class AuthService {
   }
 
   // Obter usuário atual
-  async getCurrentUser(): Promise<User | null> {
-    const { data } = await supabase.auth.getUser()
-    return data.user || null
+  async getCurrentUser() {
+    try {
+      const { data, error } = await supabase.auth.getUser()
+      if (error) throw error
+      return data.user
+    } catch (error) {
+      console.error('Erro ao obter usuário atual:', error)
+      return null
+    }
   }
 
   // Escutar mudanças de autenticação
