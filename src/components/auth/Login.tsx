@@ -33,7 +33,7 @@ export default function Login({ onLogin, onNavigate }: LoginProps) {
       authService.saveToken(response.token);
       authService.saveUser(userData);
       
-      onLogin(response.token, userData);
+
     } catch (err: any) {
       setError(err.message);
     } finally {
