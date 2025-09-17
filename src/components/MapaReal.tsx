@@ -36,7 +36,7 @@ export default function MapaReal({ pedidos, pontoPartida, rotaOtimizada = false,
     <div className="relative">
       <MapContainer center={defaultPosition} zoom={10} scrollWheelZoom={false} className={`${altura} rounded-lg border border-gray-200`}>
         <TileLayer
-          attribution=\'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors\'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <Marker position={defaultPosition}>
