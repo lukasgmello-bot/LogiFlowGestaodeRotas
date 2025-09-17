@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { LogOut, User, Mail } from 'lucide-react'
 import { authService } from '../services/authService'
 import type { AuthUser } from '../types/auth'
@@ -6,9 +6,17 @@ import type { AuthUser } from '../types/auth'
 interface DashboardProps {
   user: AuthUser
   onLogout: () => void
+  onRedirectToMap: () => void
 }
 
-export default function Dashboard({ user, onLogout }: DashboardProps) {
+export default function Dashboard({ user, onLogout, onRedirectToMap }: DashboardProps) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onRedirectToMap();
+    }, 2000); // 2 segundos
+
+    return () => clearTimeout(timer);
+  }, [onRedirectToMap]);
   const handleLogout = async () => {
     try {
       await authService.signOut()

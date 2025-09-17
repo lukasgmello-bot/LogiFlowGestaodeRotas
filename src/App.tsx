@@ -5,8 +5,9 @@ import Login from './components/Login'
 import Register from './components/Register'
 import ForgotPassword from './components/ForgotPassword'
 import Dashboard from './components/Dashboard'
+import MapaReal from './components/MapaReal'
 
-type Screen = 'login' | 'register' | 'forgot-password' | 'dashboard'
+type Screen = 'login' | 'register' | 'forgot-password' | 'dashboard' | 'mapa-real'
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('login')
@@ -107,7 +108,9 @@ function App() {
     case 'forgot-password':
       return <ForgotPassword onNavigate={handleNavigate} />
     case 'dashboard':
-      return user ? <Dashboard user={user} onLogout={handleLogout} /> : null
+      return user ? <Dashboard user={user} onLogout={handleLogout} onRedirectToMap={() => setCurrentScreen('mapa-real')} /> : null
+    case 'mapa-real':
+      return user ? <MapaReal user={user} onLogout={handleLogout} /> : null
     default:
       return <Login onLogin={handleLoginSuccess} onNavigate={handleNavigate} />
   }
