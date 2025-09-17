@@ -16,24 +16,30 @@ class AuthService {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`
+        }
       })
 
       if (authError) throw authError
       if (!authData.user) throw new Error('Erro ao criar usuário')
 
-      // 2. Criar perfil na tabela profiles (upsert evita duplicação)
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: authData.user.id,
-          nome,
-          email,
-        })
+      // 2. Criar perfil na tabela profiles apenas se o usuário foi confirmado
+      if (authData.user.email_confirmed_at || authData.session) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: authData.user.id,
+            nome,
+            email,
+          })
 
-      if (profileError) console.error('Erro ao criar perfil:', profileError)
+        if (profileError) console.error('Erro ao criar perfil:', profileError)
+      }
 
       return { user: authData.user, session: authData.session }
     } catch (error: any) {
+      console.error('Erro detalhado no cadastro:', error)
       throw new Error(error.message || 'Erro ao criar conta')
     }
   }
@@ -45,6 +51,7 @@ class AuthService {
         email,
         password,
       })
+      
       if (authError) throw authError
       if (!authData.user) throw new Error('Usuário não encontrado')
 
@@ -59,6 +66,7 @@ class AuthService {
 
       return { user: authData.user, session: authData.session, profile }
     } catch (error: any) {
+      console.error('Erro detalhado no login:', error)
       throw new Error(error.message || 'Erro ao fazer login')
     }
   }

@@ -135,13 +135,25 @@ src/
 
 ## 🚨 Possíveis Erros e Soluções
 
+### Erro: "Email signups are disabled"
+- ✅ Vá em **Authentication > Settings** no Supabase
+- ✅ Ative **Enable email provider** 
+- ✅ Certifique-se de que **Allow new users to sign up** está habilitado
+
 ### Erro: "Invalid login credentials"
 - ✅ Verifique se o email e senha estão corretos
 - ✅ Confirme se o usuário foi cadastrado com sucesso
 
 ### Erro: "Email not confirmed"
-- ✅ Desative confirmação de email em **Auth > Settings**
-- ✅ Ou configure SMTP para envio de emails
+- ✅ **Opção 1**: Desative confirmação de email em **Auth > Settings > Email Auth**
+- ✅ **Opção 2**: Configure SMTP para envio de emails em **Auth > Settings > SMTP Settings**
+- ✅ **Opção 3**: Confirme manualmente o usuário em **Auth > Users** (clique no usuário e marque como confirmado)
+
+### Configuração Recomendada para Desenvolvimento:
+1. Vá em **Authentication > Settings**
+2. Em **Email Auth**, desmarque **Enable email confirmations**
+3. Certifique-se de que **Enable email provider** está marcado
+4. Em **User Management**, marque **Allow new users to sign up**
 
 ### Erro: "Row Level Security policy violation"
 - ✅ Execute o SQL de criação da tabela `profiles`

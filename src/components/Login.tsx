@@ -32,10 +32,12 @@ export default function Login({ onLogin, onNavigate }: LoginProps) {
     } catch (err: any) {
       console.error('Erro ao fazer login:', err)
       // Tratar diferentes tipos de erro
-      if (err.message.includes('Invalid login credentials')) {
+      if (err.message.includes('Invalid login credentials') || err.message.includes('invalid_credentials')) {
         setError('Email ou senha incorretos.')
-      } else if (err.message.includes('Email not confirmed')) {
-        setError('Por favor, confirme seu email antes de fazer login.')
+      } else if (err.message.includes('Email not confirmed') || err.message.includes('email_not_confirmed')) {
+        setError('Email não confirmado. Verifique sua caixa de entrada ou entre em contato com o administrador.')
+      } else if (err.message.includes('Too many requests')) {
+        setError('Muitas tentativas de login. Tente novamente em alguns minutos.')
       } else {
         setError(err.message || 'Erro ao fazer login. Tente novamente.')
       }

@@ -64,10 +64,14 @@ export default function Register({ onRegister, onNavigate }: RegisterProps) {
       onRegister()
     } catch (err: any) {
       // Tratar diferentes tipos de erro de cadastro
-      if (err.message.includes('User already registered')) {
+      if (err.message.includes('User already registered') || err.message.includes('already_registered')) {
         setError('Este email já está cadastrado. Tente fazer login.')
       } else if (err.message.includes('Password should be at least 6 characters')) {
         setError('A senha deve ter pelo menos 6 caracteres.')
+      } else if (err.message.includes('Email signups are disabled') || err.message.includes('email_provider_disabled')) {
+        setError('Cadastros por email estão temporariamente desabilitados. Entre em contato com o administrador.')
+      } else if (err.message.includes('signup_disabled')) {
+        setError('Novos cadastros estão temporariamente suspensos. Tente novamente mais tarde.')
       } else {
         setError(err.message || 'Erro ao criar conta. Tente novamente.')
       }
