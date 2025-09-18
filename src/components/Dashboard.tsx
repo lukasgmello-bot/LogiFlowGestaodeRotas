@@ -1,31 +1,24 @@
-import React, { useState, useMemo } from 'react';
-import { LogOut, User, Mail, Map, BarChart3, Settings, Bell } from 'lucide-react';
-import { authService } from '../services/authService';
-import MapaReal from '../components/MapaReal';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import type { AuthUser } from '../types/auth';
-import type { Pedido } from '../types';
+import React, { useState, useMemo, useEffect } from "react";
+import { LogOut, User, Mail, Map, Bell } from "lucide-react";
+import { authService } from "../services/authService";
+import MapaReal from "../components/MapaReal";
+import type { AuthUser } from "../types/auth";
+import type { Pedido } from "../types";
 
 interface DashboardProps {
   user: AuthUser;
   pedidos: Pedido[];
   onLogout: () => void;
   onRedirectToMap: () => void;
-  onRedirectToReports?: () => void;
-  onRedirectToSettings?: () => void;
 }
-
-const COLORS = ['#FFBB28', '#00C49F', '#FF8042'];
 
 export default function Dashboard({
   user,
   pedidos,
   onLogout,
   onRedirectToMap,
-  onRedirectToReports,
-  onRedirectToSettings,
 }: DashboardProps) {
-  const [filtroStatus, setFiltroStatus] = useState<'todos' | 'pendente' | 'concluido'>('todos');
+  const [filtroStatus, setFiltroStatus] = useState<"todos" | "pendente" | "concluido">("todos");
   const [pagina, setPagina] = useState(1);
   const itensPorPagina = 5;
 
@@ -34,33 +27,32 @@ export default function Dashboard({
       await authService.signOut();
       onLogout();
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
+      console.error("Erro ao fazer logout:", error);
       onLogout();
     }
   };
 
-  // Filtra pedidos conforme status
   const pedidosFiltrados = useMemo(() => {
-    return filtroStatus === 'todos'
+    return filtroStatus === "todos"
       ? pedidos
       : pedidos.filter((p) => p.status.toLowerCase() === filtroStatus);
   }, [pedidos, filtroStatus]);
 
   const totalPedidos = pedidos.length;
-  const pedidosPendentes = pedidos.filter((p) => p.status.toLowerCase() === 'pendente').length;
-  const pedidosConcluidos = pedidos.filter((p) => p.status.toLowerCase() === 'concluido').length;
+  const pedidosPendentes = pedidos.filter((p) => p.status.toLowerCase() === "pendente").length;
+  const pedidosConcluidos = pedidos.filter((p) => p.status.toLowerCase() === "concluido").length;
 
-  const pieData = [
-    { name: 'Pendentes', value: pedidosPendentes },
-    { name: 'Concluídos', value: pedidosConcluidos },
-  ];
-
-  // Paginação
   const totalPaginas = Math.ceil(pedidosFiltrados.length / itensPorPagina);
   const pedidosPaginaAtual = pedidosFiltrados.slice(
     (pagina - 1) * itensPorPagina,
     pagina * itensPorPagina
   );
+
+  // Gráfico circular SVG
+  const radius = 50;
+  const circumference = 2 * Math.PI * radius;
+  const pendentePercent = (pedidosPendentes / totalPedidos) * 100 || 0;
+  const concluidoPercent = (pedidosConcluidos / totalPedidos) * 100 || 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -106,19 +98,34 @@ export default function Dashboard({
           <p className="text-gray-600">Visualize suas rotas e pedidos de forma rápida e prática</p>
         </div>
 
-        {/* Cards de estatísticas */}
+        {/* Cards de status */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
             <p className="text-sm text-gray-500">Pedidos Totais</p>
             <p className="text-2xl font-bold text-gray-900">{totalPedidos}</p>
+            <div className="w-full bg-gray-200 h-2 rounded mt-2">
+              <div className="bg-blue-600 h-2 rounded" style={{ width: "100%" }} />
+            </div>
           </div>
           <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
             <p className="text-sm text-gray-500">Pendentes</p>
             <p className="text-2xl font-bold text-yellow-600">{pedidosPendentes}</p>
+            <div className="w-full bg-gray-200 h-2 rounded mt-2">
+              <div
+                className="bg-yellow-400 h-2 rounded transition-all duration-500"
+                style={{ width: `${pendentePercent}%` }}
+              />
+            </div>
           </div>
           <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
             <p className="text-sm text-gray-500">Concluídos</p>
             <p className="text-2xl font-bold text-green-600">{pedidosConcluidos}</p>
+            <div className="w-full bg-gray-200 h-2 rounded mt-2">
+              <div
+                className="bg-green-500 h-2 rounded transition-all duration-500"
+                style={{ width: `${concluidoPercent}%` }}
+              />
+            </div>
           </div>
           <div
             onClick={onRedirectToMap}
@@ -129,51 +136,73 @@ export default function Dashboard({
           </div>
         </div>
 
-        {/* Gráfico de status dos pedidos */}
+        {/* Gráfico circular SVG */}
         <div className="bg-white rounded-2xl shadow-xl p-4 flex flex-col items-center">
           <h2 className="text-lg font-bold mb-4">Status dos Pedidos</h2>
-          <div className="w-full h-64">
-            <ResponsiveContainer>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  outerRadius={80}
-                  label
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <svg width="120" height="120" className="transform -rotate-90">
+            <circle
+              r={radius}
+              cx="60"
+              cy="60"
+              fill="transparent"
+              stroke="#e5e7eb"
+              strokeWidth={15}
+            />
+            <circle
+              r={radius}
+              cx="60"
+              cy="60"
+              fill="transparent"
+              stroke="#facc15"
+              strokeWidth={15}
+              strokeDasharray={`${(pendentePercent / 100) * circumference} ${circumference}`}
+              strokeLinecap="round"
+            />
+            <circle
+              r={radius}
+              cx="60"
+              cy="60"
+              fill="transparent"
+              stroke="#22c55e"
+              strokeWidth={15}
+              strokeDasharray={`${(concluidoPercent / 100) * circumference} ${circumference}`}
+              strokeLinecap="round"
+              strokeDashoffset={-(pendentePercent / 100) * circumference}
+            />
+            <text
+              x="60"
+              y="65"
+              textAnchor="middle"
+              className="text-gray-700 font-bold"
+              fontSize="14"
+            >
+              {totalPedidos} pedidos
+            </text>
+          </svg>
         </div>
 
         {/* Filtro de pedidos */}
         <div className="flex justify-center space-x-4">
-          {['todos', 'pendente', 'concluido'].map((status) => (
+          {["todos", "pendente", "concluido"].map((status) => (
             <button
               key={status}
               onClick={() => setFiltroStatus(status as any)}
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 filtroStatus === status
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 shadow hover:bg-gray-100'
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700 shadow hover:bg-gray-100"
               }`}
             >
-              {status === 'todos'
-                ? 'Todos'
-                : status === 'pendente'
-                ? 'Pendentes'
-                : 'Concluídos'}
+              {status === "todos"
+                ? "Todos"
+                : status === "pendente"
+                ? "Pendentes"
+                : "Concluídos"}
             </button>
           ))}
         </div>
 
-        {/* Tabela de pedidos */}
+        {/* Tabela de pedidos e paginação */}
         <div className="bg-white rounded-2xl shadow-xl p-4">
           <h2 className="text-lg font-bold mb-4">Pedidos</h2>
           <div className="overflow-x-auto">
@@ -187,15 +216,17 @@ export default function Dashboard({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {pedidosPaginaAtual.map((pedido, idx) => (
-                  <tr key={idx}>
-                    <td className="px-4 py-2 text-sm text-gray-700">{pedido.id}</td>
-                    <td className="px-4 py-2 text-sm text-gray-700">{pedido.cliente}</td>
-                    <td className="px-4 py-2 text-sm text-gray-700">{pedido.endereco}</td>
-                    <td className={`px-4 py-2 text-sm font-medium ${
-                      pedido.status.toLowerCase() === 'pendente' ? 'text-yellow-600' : 'text-green-600'
-                    }`}>
-                      {pedido.status}
+                {pedidosPaginaAtual.map((p) => (
+                  <tr key={p.id}>
+                    <td className="px-4 py-2 text-sm text-gray-700">{p.id}</td>
+                    <td className="px-4 py-2 text-sm text-gray-700">{p.cliente}</td>
+                    <td className="px-4 py-2 text-sm text-gray-700">{p.endereco}</td>
+                    <td
+                      className={`px-4 py-2 text-sm font-medium ${
+                        p.status.toLowerCase() === "pendente" ? "text-yellow-600" : "text-green-600"
+                      }`}
+                    >
+                      {p.status}
                     </td>
                   </tr>
                 ))}
@@ -203,32 +234,29 @@ export default function Dashboard({
             </table>
           </div>
 
-          {/* Paginação */}
-          <div className="flex justify-between mt-4 items-center">
+          <div className="flex justify-center space-x-2 mt-4">
             <button
-              onClick={() => setPagina((p) => Math.max(1, p - 1))}
+              onClick={() => setPagina((p) => Math.max(p - 1, 1))}
               className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-              disabled={pagina === 1}
             >
-              Anterior
+              &lt;
             </button>
-            <span className="text-sm text-gray-600">
-              Página {pagina} de {totalPaginas || 1}
+            <span className="px-3 py-1">
+              {pagina} / {totalPaginas}
             </span>
             <button
-              onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+              onClick={() => setPagina((p) => Math.min(p + 1, totalPaginas))}
               className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-              disabled={pagina === totalPaginas}
             >
-              Próximo
+              &gt;
             </button>
           </div>
         </div>
 
-        {/* Mapa resumido */}
+        {/* Mini mapa */}
         <div className="bg-white rounded-2xl shadow-xl p-4">
-          <h2 className="text-lg font-bold mb-4">Visão Geral do Mapa</h2>
-          <MapaReal pedidos={pedidos} pontoPartida="" altura="h-80" />
+          <h2 className="text-lg font-bold mb-4">Mapa Resumido</h2>
+          <MapaReal pedidos={pedidos} />
         </div>
       </main>
     </div>
