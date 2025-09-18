@@ -1,4 +1,8 @@
-import React, { useEffect, useState } from 'react';
+// src/components/MapaReal.tsx
+import React from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { MapPin, Navigation, AlertCircle } from 'lucide-react';
 import { Pedido } from '../types';
 
@@ -7,125 +11,64 @@ interface MapaRealProps {
   pontoPartida?: string;
   rotaOtimizada?: boolean;
   altura?: string;
-  user?: any;
+  user?: { nome: string };
   onLogout?: () => void;
 }
 
-const CENTRO_DISTRIBUICAO_PADRAO = "75 - Estr. do Minami, sem número - Hiroy, Biritiba Mirim - SP, 08940-000";
+const CENTRO_DISTRIBUICAO_PADRAO =
+  '75 - Estr. do Minami, sem número - Hiroy, Biritiba Mirim - SP, 08940-000';
 
-export default function MapaReal({ 
-  pedidos, 
-  pontoPartida, 
-  rotaOtimizada = false, 
-  altura = "h-96",
+// Ajuste dos ícones padrão do Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+});
+
+export default function MapaReal({
+  pedidos,
+  pontoPartida,
+  rotaOtimizada = false,
+  altura = 'h-96',
   user,
-  onLogout 
+  onLogout,
 }: MapaRealProps) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
-
   const centroDistribuicao = pontoPartida || CENTRO_DISTRIBUICAO_PADRAO;
+  const defaultPosition: [number, number] = [-23.5505, -46.6333]; // Exemplo: São Paulo
 
-  // Carregar Leaflet dinamicamente
-  useEffect(() => {
-    const loadLeaflet = async () => {
-      try {
-        // Importar CSS do Leaflet
-        await import('leaflet/dist/leaflet.css');
-        
-        // Importar Leaflet
-        const L = await import('leaflet');
-        
-        // Configurar ícones padrão
-        delete (L.Icon.Default.prototype as any)._getIconUrl;
-        L.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-          iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-          shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-        });
-        
-        setMapLoaded(true);
-      } catch (err) {
-        console.error('Erro ao carregar Leaflet:', err);
-        setError('Erro ao carregar o mapa');
-      }
-    };
+  const MapSection = () => (
+    <MapContainer
+      center={defaultPosition}
+      zoom={10}
+      scrollWheelZoom={!!user}
+      className={`${altura} rounded-lg border border-gray-200 ${user ? 'shadow-md' : ''}`}
+    >
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      <Marker position={defaultPosition}>
+        <Popup>
+          Centro de Distribuição <br /> LogiFlow
+        </Popup>
+      </Marker>
+    </MapContainer>
+  );
 
-    loadLeaflet();
-  }, []);
-
-  const defaultPosition: [number, number] = [-23.5505, -46.6333]; // São Paulo
-
-  // Componente de mapa que será carregado dinamicamente
-  const MapComponent = () => {
-    const [MapContainer, setMapContainer] = useState<any>(null);
-    const [TileLayer, setTileLayer] = useState<any>(null);
-    const [Marker, setMarker] = useState<any>(null);
-    const [Popup, setPopup] = useState<any>(null);
-
-    useEffect(() => {
-      const loadReactLeaflet = async () => {
-        try {
-          const reactLeaflet = await import('react-leaflet');
-          setMapContainer(() => reactLeaflet.MapContainer);
-          setTileLayer(() => reactLeaflet.TileLayer);
-          setMarker(() => reactLeaflet.Marker);
-          setPopup(() => reactLeaflet.Popup);
-        } catch (err) {
-          console.error('Erro ao carregar React Leaflet:', err);
-          setError('Erro ao carregar componentes do mapa');
-        }
-      };
-
-      if (mapLoaded) {
-        loadReactLeaflet();
-      }
-    }, [mapLoaded]);
-
-    if (!MapContainer || !TileLayer || !Marker || !Popup) {
-      return (
-        <div className="flex items-center justify-center h-96 bg-gray-100 rounded-lg">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-gray-600">Carregando mapa...</p>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <MapContainer 
-        center={defaultPosition} 
-        zoom={10} 
-        scrollWheelZoom={user ? true : false} 
-        className={`${altura} rounded-lg border border-gray-200 ${user ? 'shadow-md' : ''}`}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <Marker position={defaultPosition}>
-          <Popup>
-            Centro de Distribuição <br /> LogiFlow
-          </Popup>
-        </Marker>
-      </MapContainer>
-    );
-  };
-
-  if (error) {
+  // Renderiza mensagem de erro (caso necessário)
+  if (!defaultPosition) {
     return (
       <div className="flex items-center justify-center h-96 bg-red-50 rounded-lg border border-red-200">
         <div className="text-center">
           <AlertCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
-          <p className="text-red-600">{error}</p>
+          <p className="text-red-600">Erro ao carregar o mapa</p>
         </div>
       </div>
     );
   }
 
-  // Se for usado como componente principal (com user e onLogout), renderizar interface completa
+  // Renderização principal com dashboard
   if (user && onLogout) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -162,25 +105,22 @@ export default function MapaReal({
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 Sistema de Rotas LogiFlow
               </h1>
-              <p className="text-gray-600">
-                Visualização interativa de rotas de entrega
-              </p>
+              <p className="text-gray-600">Visualização interativa de rotas de entrega</p>
             </div>
 
             <div className="relative">
-              <MapComponent />
+              <MapSection />
 
-              {/* Informações da rota */}
+              {/* Ponto de partida */}
               <div className="absolute top-4 left-4 bg-white rounded-lg shadow-md p-3 max-w-xs">
                 <div className="flex items-center space-x-2 mb-2">
                   <Navigation className="w-4 h-4 text-blue-600" />
                   <span className="text-sm font-medium">Ponto de Partida</span>
                 </div>
-                <p className="text-xs text-gray-600 leading-tight">
-                  {centroDistribuicao}
-                </p>
+                <p className="text-xs text-gray-600 leading-tight">{centroDistribuicao}</p>
               </div>
 
+              {/* Informações de pedidos */}
               {pedidos.length > 0 && (
                 <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-md p-3">
                   <div className="flex items-center space-x-2 text-sm">
@@ -205,20 +145,17 @@ export default function MapaReal({
     );
   }
 
-  // Renderização padrão como componente de mapa
+  // Renderização apenas do mapa como componente
   return (
     <div className="relative">
-      <MapComponent />
+      <MapSection />
 
-      {/* Informações da rota */}
       <div className="absolute top-4 left-4 bg-white rounded-lg shadow-md p-3 max-w-xs">
         <div className="flex items-center space-x-2 mb-2">
           <Navigation className="w-4 h-4 text-blue-600" />
           <span className="text-sm font-medium">Ponto de Partida</span>
         </div>
-        <p className="text-xs text-gray-600 leading-tight">
-          {centroDistribuicao}
-        </p>
+        <p className="text-xs text-gray-600 leading-tight">{centroDistribuicao}</p>
       </div>
 
       {rotaOtimizada && pedidos.length > 0 && (
