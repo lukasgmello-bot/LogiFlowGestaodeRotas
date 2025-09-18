@@ -1,32 +1,66 @@
-import React from 'react'
-import { LogOut, User, Mail, Map, BarChart3, Settings } from 'lucide-react'
-import { authService } from '../services/authService'
-import type { AuthUser } from '../types/auth'
+import React, { useState, useMemo } from 'react';
+import { LogOut, User, Mail, Map, BarChart3, Settings, Bell } from 'lucide-react';
+import { authService } from '../services/authService';
+import MapaReal from '../components/MapaReal';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import type { AuthUser } from '../types/auth';
+import type { Pedido } from '../types';
 
 interface DashboardProps {
-  user: AuthUser
-  onLogout: () => void
-  onRedirectToMap: () => void
-  onRedirectToReports?: () => void
-  onRedirectToSettings?: () => void
+  user: AuthUser;
+  pedidos: Pedido[];
+  onLogout: () => void;
+  onRedirectToMap: () => void;
+  onRedirectToReports?: () => void;
+  onRedirectToSettings?: () => void;
 }
+
+const COLORS = ['#FFBB28', '#00C49F', '#FF8042'];
 
 export default function Dashboard({
   user,
+  pedidos,
   onLogout,
   onRedirectToMap,
   onRedirectToReports,
-  onRedirectToSettings
+  onRedirectToSettings,
 }: DashboardProps) {
+  const [filtroStatus, setFiltroStatus] = useState<'todos' | 'pendente' | 'concluido'>('todos');
+  const [pagina, setPagina] = useState(1);
+  const itensPorPagina = 5;
+
   const handleLogout = async () => {
     try {
-      await authService.signOut()
-      onLogout()
+      await authService.signOut();
+      onLogout();
     } catch (error) {
-      console.error('Erro ao fazer logout:', error)
-      onLogout()
+      console.error('Erro ao fazer logout:', error);
+      onLogout();
     }
-  }
+  };
+
+  // Filtra pedidos conforme status
+  const pedidosFiltrados = useMemo(() => {
+    return filtroStatus === 'todos'
+      ? pedidos
+      : pedidos.filter((p) => p.status.toLowerCase() === filtroStatus);
+  }, [pedidos, filtroStatus]);
+
+  const totalPedidos = pedidos.length;
+  const pedidosPendentes = pedidos.filter((p) => p.status.toLowerCase() === 'pendente').length;
+  const pedidosConcluidos = pedidos.filter((p) => p.status.toLowerCase() === 'concluido').length;
+
+  const pieData = [
+    { name: 'Pendentes', value: pedidosPendentes },
+    { name: 'Concluídos', value: pedidosConcluidos },
+  ];
+
+  // Paginação
+  const totalPaginas = Math.ceil(pedidosFiltrados.length / itensPorPagina);
+  const pedidosPaginaAtual = pedidosFiltrados.slice(
+    (pagina - 1) * itensPorPagina,
+    pagina * itensPorPagina
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -34,19 +68,28 @@ export default function Dashboard({
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+            <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold text-gray-900">LogiFlow</h1>
-              <div className="ml-4 px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+              <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
                 Dashboard
-              </div>
+              </span>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-500">
-                Bem-vindo, <span className="font-medium text-gray-700">{user.nome}</span>
+              <button className="relative">
+                <Bell className="w-6 h-6 text-gray-500" />
+                {pedidosPendentes > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                    {pedidosPendentes}
+                  </span>
+                )}
+              </button>
+              <div className="flex items-center space-x-2">
+                <User className="w-5 h-5 text-gray-500" />
+                <span className="text-gray-700 font-medium">{user.nome}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Sair</span>
@@ -56,113 +99,138 @@ export default function Dashboard({
         </div>
       </header>
 
-      {/* Conteúdo principal */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Boas-vindas */}
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mb-4">
-              <User className="w-10 h-10 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Bem-vindo ao LogiFlow!
-            </h1>
-            <p className="text-gray-600">
-              Selecione abaixo para acessar os módulos do sistema
-            </p>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        {/* Boas-vindas */}
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Bem-vindo ao LogiFlow!</h1>
+          <p className="text-gray-600">Visualize suas rotas e pedidos de forma rápida e prática</p>
+        </div>
+
+        {/* Cards de estatísticas */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
+            <p className="text-sm text-gray-500">Pedidos Totais</p>
+            <p className="text-2xl font-bold text-gray-900">{totalPedidos}</p>
           </div>
-
-          {/* Grid de atalhos */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Módulo Mapa */}
-            <div
-              onClick={onRedirectToMap}
-              className="cursor-pointer p-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition transform"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-blue-200 rounded-full">
-                  <Map className="w-6 h-6 text-blue-700" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Mapa de Rotas</h3>
-                  <p className="text-sm text-gray-600">Gerencie suas entregas em tempo real</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Módulo Relatórios */}
-            <div
-              onClick={onRedirectToReports}
-              className="cursor-pointer p-6 bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition transform"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-purple-200 rounded-full">
-                  <BarChart3 className="w-6 h-6 text-purple-700" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Relatórios</h3>
-                  <p className="text-sm text-gray-600">Veja estatísticas e indicadores</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Módulo Configurações */}
-            <div
-              onClick={onRedirectToSettings}
-              className="cursor-pointer p-6 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition transform"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-green-200 rounded-full">
-                  <Settings className="w-6 h-6 text-green-700" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Configurações</h3>
-                  <p className="text-sm text-gray-600">Gerencie sua conta e preferências</p>
-                </div>
-              </div>
-            </div>
+          <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
+            <p className="text-sm text-gray-500">Pendentes</p>
+            <p className="text-2xl font-bold text-yellow-600">{pedidosPendentes}</p>
           </div>
-
-          {/* Card do usuário */}
-          <div className="mt-10 max-w-md mx-auto bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 text-center">
-              Informações do Usuário
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
-                  <User className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Nome</p>
-                  <p className="font-medium text-gray-900">{user.nome}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-purple-100 rounded-full">
-                  <Mail className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="font-medium text-gray-900">{user.email}</p>
-                </div>
-              </div>
-            </div>
+          <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
+            <p className="text-sm text-gray-500">Concluídos</p>
+            <p className="text-2xl font-bold text-green-600">{pedidosConcluidos}</p>
           </div>
+          <div
+            onClick={onRedirectToMap}
+            className="bg-white rounded-xl shadow p-5 flex flex-col items-center cursor-pointer hover:scale-105 transition transform"
+          >
+            <Map className="w-6 h-6 text-blue-700 mb-2" />
+            <p className="text-sm font-medium text-gray-900">Abrir Mapa</p>
+          </div>
+        </div>
 
-          {/* Botão logout (extra) */}
-          <div className="mt-8 flex justify-center">
+        {/* Gráfico de status dos pedidos */}
+        <div className="bg-white rounded-2xl shadow-xl p-4 flex flex-col items-center">
+          <h2 className="text-lg font-bold mb-4">Status dos Pedidos</h2>
+          <div className="w-full h-64">
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  dataKey="value"
+                  nameKey="name"
+                  outerRadius={80}
+                  label
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Filtro de pedidos */}
+        <div className="flex justify-center space-x-4">
+          {['todos', 'pendente', 'concluido'].map((status) => (
             <button
-              onClick={handleLogout}
-              className="flex items-center space-x-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              key={status}
+              onClick={() => setFiltroStatus(status as any)}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                filtroStatus === status
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 shadow hover:bg-gray-100'
+              }`}
             >
-              <LogOut className="w-5 h-5" />
-              <span>Fazer Logout</span>
+              {status === 'todos'
+                ? 'Todos'
+                : status === 'pendente'
+                ? 'Pendentes'
+                : 'Concluídos'}
+            </button>
+          ))}
+        </div>
+
+        {/* Tabela de pedidos */}
+        <div className="bg-white rounded-2xl shadow-xl p-4">
+          <h2 className="text-lg font-bold mb-4">Pedidos</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Endereço</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {pedidosPaginaAtual.map((pedido, idx) => (
+                  <tr key={idx}>
+                    <td className="px-4 py-2 text-sm text-gray-700">{pedido.id}</td>
+                    <td className="px-4 py-2 text-sm text-gray-700">{pedido.cliente}</td>
+                    <td className="px-4 py-2 text-sm text-gray-700">{pedido.endereco}</td>
+                    <td className={`px-4 py-2 text-sm font-medium ${
+                      pedido.status.toLowerCase() === 'pendente' ? 'text-yellow-600' : 'text-green-600'
+                    }`}>
+                      {pedido.status}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Paginação */}
+          <div className="flex justify-between mt-4 items-center">
+            <button
+              onClick={() => setPagina((p) => Math.max(1, p - 1))}
+              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+              disabled={pagina === 1}
+            >
+              Anterior
+            </button>
+            <span className="text-sm text-gray-600">
+              Página {pagina} de {totalPaginas || 1}
+            </span>
+            <button
+              onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+              disabled={pagina === totalPaginas}
+            >
+              Próximo
             </button>
           </div>
         </div>
+
+        {/* Mapa resumido */}
+        <div className="bg-white rounded-2xl shadow-xl p-4">
+          <h2 className="text-lg font-bold mb-4">Visão Geral do Mapa</h2>
+          <MapaReal pedidos={pedidos} pontoPartida="" altura="h-80" />
+        </div>
       </main>
     </div>
-  )
+  );
 }
