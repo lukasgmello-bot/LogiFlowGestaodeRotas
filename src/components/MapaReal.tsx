@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 import { MapPin, Navigation, AlertCircle } from 'lucide-react';
 import { Pedido } from '../types';
 
@@ -26,20 +23,107 @@ export default function MapaReal({
 }: MapaRealProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   const centroDistribuicao = pontoPartida || CENTRO_DISTRIBUICAO_PADRAO;
 
-  // Definir ícone padrão para marcadores do Leaflet
+  // Carregar Leaflet dinamicamente
   useEffect(() => {
-    delete (L.Icon.Default.prototype as any)._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-      iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-    });
+    const loadLeaflet = async () => {
+      try {
+        // Importar CSS do Leaflet
+        await import('leaflet/dist/leaflet.css');
+        
+        // Importar Leaflet
+        const L = await import('leaflet');
+        
+        // Configurar ícones padrão
+        delete (L.Icon.Default.prototype as any)._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+          iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+        });
+        
+        setMapLoaded(true);
+      } catch (err) {
+        console.error('Erro ao carregar Leaflet:', err);
+        setError('Erro ao carregar o mapa');
+      }
+    };
+
+    loadLeaflet();
   }, []);
 
   const defaultPosition: [number, number] = [-23.5505, -46.6333]; // São Paulo
+
+  // Componente de mapa que será carregado dinamicamente
+  const MapComponent = () => {
+    const [MapContainer, setMapContainer] = useState<any>(null);
+    const [TileLayer, setTileLayer] = useState<any>(null);
+    const [Marker, setMarker] = useState<any>(null);
+    const [Popup, setPopup] = useState<any>(null);
+
+    useEffect(() => {
+      const loadReactLeaflet = async () => {
+        try {
+          const reactLeaflet = await import('react-leaflet');
+          setMapContainer(() => reactLeaflet.MapContainer);
+          setTileLayer(() => reactLeaflet.TileLayer);
+          setMarker(() => reactLeaflet.Marker);
+          setPopup(() => reactLeaflet.Popup);
+        } catch (err) {
+          console.error('Erro ao carregar React Leaflet:', err);
+          setError('Erro ao carregar componentes do mapa');
+        }
+      };
+
+      if (mapLoaded) {
+        loadReactLeaflet();
+      }
+    }, [mapLoaded]);
+
+    if (!MapContainer || !TileLayer || !Marker || !Popup) {
+      return (
+        <div className="flex items-center justify-center h-96 bg-gray-100 rounded-lg">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-gray-600">Carregando mapa...</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <MapContainer 
+        center={defaultPosition} 
+        zoom={10} 
+        scrollWheelZoom={user ? true : false} 
+        className={`${altura} rounded-lg border border-gray-200 ${user ? 'shadow-md' : ''}`}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <Marker position={defaultPosition}>
+          <Popup>
+            Centro de Distribuição <br /> LogiFlow
+          </Popup>
+        </Marker>
+      </MapContainer>
+    );
+  };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96 bg-red-50 rounded-lg border border-red-200">
+        <div className="text-center">
+          <AlertCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
+          <p className="text-red-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   // Se for usado como componente principal (com user e onLogout), renderizar interface completa
   if (user && onLogout) {
@@ -84,22 +168,7 @@ export default function MapaReal({
             </div>
 
             <div className="relative">
-              <MapContainer 
-                center={defaultPosition} 
-                zoom={10} 
-                scrollWheelZoom={true} 
-                className="h-96 rounded-lg border border-gray-200 shadow-md"
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <Marker position={defaultPosition}>
-                  <Popup>
-                    Centro de Distribuição <br /> LogiFlow
-                  </Popup>
-                </Marker>
-              </MapContainer>
+              <MapComponent />
 
               {/* Informações da rota */}
               <div className="absolute top-4 left-4 bg-white rounded-lg shadow-md p-3 max-w-xs">
@@ -139,22 +208,7 @@ export default function MapaReal({
   // Renderização padrão como componente de mapa
   return (
     <div className="relative">
-      <MapContainer 
-        center={defaultPosition} 
-        zoom={10} 
-        scrollWheelZoom={false} 
-        className={`${altura} rounded-lg border border-gray-200`}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <Marker position={defaultPosition}>
-          <Popup>
-            Centro de Distribuição <br /> LogiFlow
-          </Popup>
-        </Marker>
-      </MapContainer>
+      <MapComponent />
 
       {/* Informações da rota */}
       <div className="absolute top-4 left-4 bg-white rounded-lg shadow-md p-3 max-w-xs">
