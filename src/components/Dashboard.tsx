@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react'
-import { LogOut, User, Mail } from 'lucide-react'
+import React from 'react'
+import { LogOut, User, Mail, Map, BarChart3, Settings } from 'lucide-react'
 import { authService } from '../services/authService'
 import type { AuthUser } from '../types/auth'
 
@@ -7,29 +7,30 @@ interface DashboardProps {
   user: AuthUser
   onLogout: () => void
   onRedirectToMap: () => void
+  onRedirectToReports?: () => void
+  onRedirectToSettings?: () => void
 }
 
-export default function Dashboard({ user, onLogout, onRedirectToMap }: DashboardProps) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onRedirectToMap();
-    }, 2000); // 2 segundos
-
-    return () => clearTimeout(timer);
-  }, [onRedirectToMap]);
+export default function Dashboard({
+  user,
+  onLogout,
+  onRedirectToMap,
+  onRedirectToReports,
+  onRedirectToSettings
+}: DashboardProps) {
   const handleLogout = async () => {
     try {
       await authService.signOut()
       onLogout()
     } catch (error) {
       console.error('Erro ao fazer logout:', error)
-      // Mesmo com erro, executar logout local
       onLogout()
     }
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -55,9 +56,11 @@ export default function Dashboard({ user, onLogout, onRedirectToMap }: Dashboard
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Conteúdo principal */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center mb-8">
+          {/* Boas-vindas */}
+          <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mb-4">
               <User className="w-10 h-10 text-white" />
             </div>
@@ -65,18 +68,66 @@ export default function Dashboard({ user, onLogout, onRedirectToMap }: Dashboard
               Bem-vindo ao LogiFlow!
             </h1>
             <p className="text-gray-600">
-              Sistema de gestão logística e rotas de entrega
+              Selecione abaixo para acessar os módulos do sistema
             </p>
-            <div className="mt-4 inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
-              <span className="text-sm">✅ Login realizado com sucesso!</span>
+          </div>
+
+          {/* Grid de atalhos */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Módulo Mapa */}
+            <div
+              onClick={onRedirectToMap}
+              className="cursor-pointer p-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition transform"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-200 rounded-full">
+                  <Map className="w-6 h-6 text-blue-700" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Mapa de Rotas</h3>
+                  <p className="text-sm text-gray-600">Gerencie suas entregas em tempo real</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Módulo Relatórios */}
+            <div
+              onClick={onRedirectToReports}
+              className="cursor-pointer p-6 bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition transform"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-purple-200 rounded-full">
+                  <BarChart3 className="w-6 h-6 text-purple-700" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Relatórios</h3>
+                  <p className="text-sm text-gray-600">Veja estatísticas e indicadores</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Módulo Configurações */}
+            <div
+              onClick={onRedirectToSettings}
+              className="cursor-pointer p-6 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition transform"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-green-200 rounded-full">
+                  <Settings className="w-6 h-6 text-green-700" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Configurações</h3>
+                  <p className="text-sm text-gray-600">Gerencie sua conta e preferências</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="max-w-md mx-auto bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
+          {/* Card do usuário */}
+          <div className="mt-10 max-w-md mx-auto bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 text-center">
               Informações do Usuário
             </h2>
-            
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
@@ -100,6 +151,7 @@ export default function Dashboard({ user, onLogout, onRedirectToMap }: Dashboard
             </div>
           </div>
 
+          {/* Botão logout (extra) */}
           <div className="mt-8 flex justify-center">
             <button
               onClick={handleLogout}
