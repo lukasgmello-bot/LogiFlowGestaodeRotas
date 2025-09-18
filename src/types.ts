@@ -4,7 +4,8 @@ export interface Pedido {
   id: string;
   endereco: string;
   volume: number;
-  status: 'Pendente' | 'Em Rota' | 'Entregue';
+  status: 'Pendente' | 'Em Rota' | 'Entregue' | 'Alocado';
+  ordem?: number;
 }
 
 export interface Caminhao {
@@ -22,9 +23,11 @@ export interface Rota {
   caminhaoId: string;
   pedidos: Pedido[];
   distanciaTotal: number;
-  tempoEstimado: number;
+  tempoEstimado?: number;
   status: 'Planejada' | 'Em Andamento' | 'Concluída';
   pontoPartida: string;
+  volumeTotal: number;
+  data: string;
 }
 
 export interface ConfiguracaoRota {
