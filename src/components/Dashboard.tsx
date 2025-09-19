@@ -1,11 +1,13 @@
 // Dashboard.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Caminhao, Pedido, Rota, ConfiguracaoRota, TelaAtiva } from '../types';
-import { Truck, Package, Route, MapPin, FileText } from 'lucide-react';
+import { Truck, Package, Route, MapPin, FileText, Plus } from 'lucide-react';
 import MapaReal from './MapaReal';
+import CadastroCaminhoes from './CadastroCaminhoes';
 
 interface DashboardProps {
   caminhoes?: Caminhao[];
+  setCaminhoes: (caminhoes: Caminhao[]) => void;
   pedidos?: Pedido[];
   rotas?: Rota[];
   configuracoes?: ConfiguracaoRota[];
@@ -15,12 +17,15 @@ interface DashboardProps {
 
 export default function Dashboard({
   caminhoes = [],
+  setCaminhoes,
   pedidos = [],
   rotas = [],
   configuracoes = [],
   pontoPartidaSelecionado,
   setTelaAtiva,
 }: DashboardProps) {
+  const [mostrarCadastroCaminhoes, setMostrarCadastroCaminhoes] = useState(false);
+
   // Filtrar pedidos pendentes e rotas ativas
   const pedidosPendentes = pedidos.filter(p => p.status === 'Pendente');
   const rotasAtivas = rotas.filter(r => r.status === 'Em Andamento');
@@ -31,13 +36,31 @@ export default function Dashboard({
     ? configuracoes.find(c => c.id === pontoPartidaSelecionado)?.endereco
     : configuracaoPadrao?.endereco;
 
+  if (mostrarCadastroCaminhoes) {
+    // Renderiza a aba de cadastro de caminhões
+    return <CadastroCaminhoes caminhoes={caminhoes} setCaminhoes={setCaminhoes} />;
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 p-4">
       <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
 
       {/* Cards principais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card icon={<Truck className="w-8 h-8 text-blue-600" />} label="Caminhões" value={caminhoes.length} />
+        <Card
+          icon={
+            <div className="flex items-center space-x-1">
+              <Truck className="w-8 h-8 text-blue-600" />
+              <Plus
+                className="w-4 h-4 text-blue-500 cursor-pointer hover:text-blue-700"
+                onClick={() => setMostrarCadastroCaminhoes(true)}
+                title="Cadastrar Caminhão"
+              />
+            </div>
+          }
+          label="Caminhões"
+          value={caminhoes.length}
+        />
         <Card icon={<Package className="w-8 h-8 text-green-600" />} label="Pedidos Pendentes" value={pedidosPendentes.length} />
         <Card icon={<Route className="w-8 h-8 text-purple-600" />} label="Rotas Ativas" value={rotasAtivas.length} />
         <Card icon={<FileText className="w-8 h-8 text-yellow-600" />} label="Relatórios" value="Acessar" />
@@ -56,19 +79,24 @@ export default function Dashboard({
 
       {/* Listagem resumida */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pedidos */}
-        <ResumoCard title="Pedidos Pendentes" items={pedidosPendentes.map((p, i) => ({
-          key: p.id,
-          label: `${i + 1}. ${p.endereco}`,
-          value: `${p.volume} m³`,
-        }))} emptyText="Nenhum pedido pendente." />
-
-        {/* Rotas em andamento */}
-        <ResumoCard title="Rotas em Andamento" items={rotasAtivas.map((r, i) => ({
-          key: r.id,
-          label: `${i + 1}. Caminhão: ${caminhoes.find(c => c.id === r.caminhaoId)?.placa || 'N/A'}`,
-          value: `${r.pedidos.length} pedidos`,
-        }))} emptyText="Nenhuma rota ativa." />
+        <ResumoCard
+          title="Pedidos Pendentes"
+          items={pedidosPendentes.map((p, i) => ({
+            key: p.id,
+            label: `${i + 1}. ${p.endereco}`,
+            value: `${p.volume} m³`,
+          }))}
+          emptyText="Nenhum pedido pendente."
+        />
+        <ResumoCard
+          title="Rotas em Andamento"
+          items={rotasAtivas.map((r, i) => ({
+            key: r.id,
+            label: `${i + 1}. Caminhão: ${caminhoes.find(c => c.id === r.caminhaoId)?.placa || 'N/A'}`,
+            value: `${r.pedidos.length} pedidos`,
+          }))}
+          emptyText="Nenhuma rota ativa."
+        />
       </div>
     </div>
   );
