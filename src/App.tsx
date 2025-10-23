@@ -1,19 +1,38 @@
 import React, { useState, useEffect } from 'react'
 import { authService } from './services/authService'
+import { indexedDBService } from './services/indexedDBService'
+import { syncService } from './services/syncService'
+import { companyService, type Company } from './services/companyService'
 import type { AuthUser } from './types/auth'
 
 import Login from './components/Login'
 import Register from './components/Register'
 import ForgotPassword from './components/ForgotPassword'
+import CompanySelector from './components/CompanySelector'
 import Dashboard from './components/Dashboard'
 import MapaReal from './components/MapaReal'
 
-type Screen = 'login' | 'register' | 'forgot-password' | 'dashboard' | 'mapa-real'
+type Screen = 'login' | 'register' | 'forgot-password' | 'company-selector' | 'dashboard' | 'mapa-real'
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('login')
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Inicializar IndexedDB na montagem do componente
+  useEffect(() => {
+    const initIndexedDB = async () => {
+      try {
+        await indexedDBService.init()
+        console.log('IndexedDB inicializado com sucesso')
+      } catch (err) {
+        console.error('Erro ao inicializar IndexedDB:', err)
+      }
+    }
+
+    initIndexedDB()
+  }, [])
 
   // Checagem de autenticação inicial
   useEffect(() => {
@@ -28,7 +47,21 @@ export default function App() {
               email: authUser.email || '',
               nome: profile.nome
             })
-            setCurrentScreen('dashboard')
+            
+            // Verificar se há uma empresa selecionada anteriormente
+            const savedCompanyId = await indexedDBService.getSessionData('selectedCompanyId')
+            if (savedCompanyId) {
+              const company = await companyService.getCompany(savedCompanyId)
+              if (company) {
+                setSelectedCompany(company)
+                setCurrentScreen('dashboard')
+                syncService.startSync(authUser.id, company.id)
+              } else {
+                setCurrentScreen('company-selector')
+              }
+            } else {
+              setCurrentScreen('company-selector')
+            }
           }
         }
       } catch (err) {
@@ -52,25 +85,63 @@ export default function App() {
             email: authUser.email || '',
             nome: profile.nome
           })
-          setCurrentScreen('dashboard')
+          
+          // Verificar se há uma empresa selecionada anteriormente
+          const savedCompanyId = await indexedDBService.getSessionData('selectedCompanyId')
+          if (savedCompanyId) {
+            const company = await companyService.getCompany(savedCompanyId)
+            if (company) {
+              setSelectedCompany(company)
+              setCurrentScreen('dashboard')
+              syncService.startSync(authUser.id, company.id)
+            } else {
+              setCurrentScreen('company-selector')
+            }
+          } else {
+            setCurrentScreen('company-selector')
+          }
         }
       } else {
         setUser(null)
+        setSelectedCompany(null)
         setCurrentScreen('login')
+        syncService.stopSync()
       }
     })
 
-    return () => subscription?.unsubscribe()
+    return () => {
+      subscription?.unsubscribe()
+      syncService.stopSync()
+    }
   }, [])
 
   const handleLogout = async () => {
     try {
+      syncService.stopSync()
+      await indexedDBService.deleteSessionData('selectedCompanyId')
       await authService.signOut()
     } catch (err) {
       console.error('Erro ao fazer logout:', err)
     } finally {
       setUser(null)
+      setSelectedCompany(null)
       setCurrentScreen('login')
+    }
+  }
+
+  const handleSelectCompany = async (company: Company) => {
+    try {
+      // Salvar a empresa selecionada no IndexedDB
+      await indexedDBService.saveSessionData('selectedCompanyId', company.id)
+      setSelectedCompany(company)
+      setCurrentScreen('dashboard')
+      
+      // Iniciar sincronização para a empresa selecionada
+      if (user) {
+        syncService.startSync(user.id, company.id)
+      }
+    } catch (err) {
+      console.error('Erro ao selecionar empresa:', err)
     }
   }
 
@@ -92,17 +163,33 @@ export default function App() {
       return <Register onRegister={() => {}} onNavigate={handleNavigate} />
     case 'forgot-password':
       return <ForgotPassword onNavigate={handleNavigate} />
-    case 'dashboard':
+    case 'company-selector':
       return user ? (
+        <CompanySelector
+          userId={user.id}
+          onSelectCompany={handleSelectCompany}
+          onLogout={handleLogout}
+        />
+      ) : null
+    case 'dashboard':
+      return user && selectedCompany ? (
         <Dashboard
           user={user}
+          company={selectedCompany}
           onLogout={handleLogout}
           onRedirectToMap={() => setCurrentScreen('mapa-real')}
         />
       ) : null
     case 'mapa-real':
-      return user ? <MapaReal user={user} onLogout={handleLogout} /> : null
+      return user && selectedCompany ? (
+        <MapaReal 
+          user={user} 
+          company={selectedCompany}
+          onLogout={handleLogout} 
+        />
+      ) : null
     default:
       return <Login onLogin={() => {}} onNavigate={handleNavigate} />
   }
 }
+
