@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Caminhao, Pedido, Rota, ConfiguracaoRota, TelaAtiva } from '../types';
-import DashboardPrincipal from './src/components/DashboardPrincipal';
+import DashboardPrincipal from './dashboard/DashboardPrincipal';
 import CadastroCaminhoes from './CadastroCaminhoes';
 
 interface DashboardProps {
