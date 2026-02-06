@@ -23,11 +23,12 @@ export default function App() {
   // Inicializar IndexedDB na montagem do componente
   useEffect(() => {
     const initIndexedDB = async () => {
+      console.log('Iniciando inicialização do IndexedDB...');
       try {
         await indexedDBService.init()
         console.log('IndexedDB inicializado com sucesso')
       } catch (err) {
-        console.error('Erro ao inicializar IndexedDB:', err)
+        console.error('Erro crítico ao inicializar IndexedDB:', err)
       }
     }
 
@@ -37,8 +38,10 @@ export default function App() {
   // Checagem de autenticação inicial
   useEffect(() => {
     const initAuth = async () => {
+      console.log('Iniciando verificação de autenticação...');
       try {
         const authUser = await authService.getCurrentUser()
+        console.log('Usuário atual:', authUser ? 'Autenticado' : 'Não autenticado');
         if (authUser) {
           const profile = await authService.getProfile(authUser.id)
           if (profile) {
